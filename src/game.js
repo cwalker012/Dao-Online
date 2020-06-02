@@ -134,6 +134,8 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(leftZone !== null){
         leftZone.setInteractive();
+        leftZone.on('clicked', move, this);
+
     }
 
     var rightZone = null;
@@ -149,6 +151,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(rightZone !== null){
         rightZone.setInteractive();
+        rightZone.on('clicked', move, this);
     }
 
     var upZone = null;
@@ -164,6 +167,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(upZone !== null){
         upZone.setInteractive();
+        upZone.on('clicked', move, this);
     }
 
     var downZone = null;
@@ -180,7 +184,12 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(downZone !== null){
         downZone.setInteractive();
+        downZone.on('clicked', move, this);
     }
+}
+
+function move(zone){
+    selectZones.clear();
 }
 
 
