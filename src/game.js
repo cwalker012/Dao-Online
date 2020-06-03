@@ -39,6 +39,7 @@ var BoardScene = new Phaser.Class({
         this.input.on('gameobjectup', function (pointer, gameObject)
         {
             gameObject.emit('clicked', gameObject);
+            gameObject.emit('moved', gameObject);
         }, this);
     
         // generate sprite for selection box 
@@ -57,12 +58,12 @@ function select(piece){
     if (piece == selectedPiece){
         piece.clearTint();
         selectedPiece = null;
-        selectZones.clear(true);
+        selectZones.clear(true, true);
     }
     else{
         if(selectedPiece != null){
             selectedPiece.clearTint();
-            selectZones.clear(true);
+            selectZones.clear(true, true);
         }
         selectedPiece = piece;
         piece.setTintFill(0xff0000);
@@ -134,7 +135,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(leftZone !== null){
         leftZone.setInteractive();
-        leftZone.on('clicked', move, this);
+        leftZone.on('moved', move, this);
 
     }
 
@@ -151,7 +152,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(rightZone !== null){
         rightZone.setInteractive();
-        rightZone.on('clicked', move, this);
+        rightZone.on('moved', move, this);
     }
 
     var upZone = null;
@@ -167,7 +168,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(upZone !== null){
         upZone.setInteractive();
-        upZone.on('clicked', move, this);
+        upZone.on('moved', move, this);
     }
 
     var downZone = null;
@@ -184,12 +185,16 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
     if(downZone !== null){
         downZone.setInteractive();
-        downZone.on('clicked', move, this);
+        downZone.on('moved', move, this);
     }
 }
 
 function move(zone){
-    selectZones.clear();
+    selectedPiece.clearTint();
+    selectedPiece.x = zone.x;
+    selectedPiece.y = zone.y;
+    selectedPiece = null;
+    selectZones.clear(true, true);
 }
 
 
