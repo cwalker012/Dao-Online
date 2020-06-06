@@ -80,8 +80,7 @@ function findPieces(groupArray){
     var noneUp = true;
     var downPiece = null;
     var noneDown = true;
-    var groupArray = groupArray.children.entries
-    console.log(groupArray);
+    var groupArray = groupArray.children.entries;
     for(i = 0; i < groupArray.length; i++) {
         if(groupArray[i] !== selectedPiece){
             if(selectedPiece.y === groupArray[i].y){
@@ -122,49 +121,47 @@ function findPieces(groupArray){
     determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown);
 }
 
+/* Determine takes the pieces and boolean used to determine where to
+ place selection zones relative to selected piece. */
 function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown){
     var leftZone = null;
+    //Check if the selected piece is on the left side of the board
     if (selectedPiece.x === 100) {
-        console.log('here left');
-    } else if(leftPiece !== null){
+    } 
+    // Checking if there is a piece to left and there isn't one directly next to selected piece 
+    else if(leftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y) === undefined){
         leftZone = selectZones.create(leftPiece.x + SPACING, leftPiece.y, 'box');
-        console.log('here2 left');
-    }else if(noneLeft === true) {
+    } 
+    // Case where there are no pieces to the left
+    else if(noneLeft === true) {
         leftZone = selectZones.create(100, selectedPiece.y, 'box');
-        console.log('here3');
     }
+    // If a leftZone has been created, set it as interactive and set a listener.
     if(leftZone !== null){
         leftZone.setInteractive();
         leftZone.on('moved', move, this);
-
     }
 
     var rightZone = null;
     if (selectedPiece.x === 604) {
-        console.log('here right');
     }
-    else if(rightPiece !== null){
+    else if(rightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y) === undefined){
         rightZone = selectZones.create(rightPiece.x - SPACING, rightPiece.y, 'box');
-        console.log('here2 right');
     }else if(noneRight === true) {
         rightZone = selectZones.create(604, selectedPiece.y, 'box');
-        console.log('here3');
     }
     if(rightZone !== null){
         rightZone.setInteractive();
         rightZone.on('moved', move, this);
     }
-
+ 
     var upZone = null;
     if (selectedPiece.y === 100) {
-        console.log('here up');
     }
-    else if(upPiece !== null){
+    else if(upPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y - SPACING) === undefined){
         upZone = selectZones.create(upPiece.x, upPiece.y + SPACING, 'box');
-        console.log('here2 up');
     }else if(noneUp === true) {
         upZone = selectZones.create(selectedPiece.x, 100, 'box');
-        console.log('here3 up');
     }
     if(upZone !== null){
         upZone.setInteractive();
@@ -174,14 +171,11 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     var downZone = null;
     console.log(selectedPiece.y);
     if (selectedPiece.y === 604) {
-        console.log('here down');
     }
-    else if(downPiece !== null){
+    else if(downPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y + SPACING) === undefined){
         downZone = selectZones.create(downPiece.x, downPiece.y - SPACING, 'box');
-        console.log('here2 down');
     }else if(noneDown === true) {
         downZone = selectZones.create(selectedPiece.x, 604, 'box');
-        console.log('here3 down');
     }
     if(downZone !== null){
         downZone.setInteractive();
