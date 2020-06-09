@@ -1,15 +1,17 @@
 const SPACING = 168; // Spacing between pieces
 const WHITE = 1;
-const BLACK = 0;
+const BLACK = -1;
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
 var selectZones;  // The group that stores the sprites for selecting your piece's move
 var whitePieces; 
 var blackPieces;
-var board =[["white", "", "", "black"],
-            ["", "white","black", ""],
-            ["", "black", "white", ""],
-            ["black", "", "", "white"]];
+var board =[[WHITE, , , BLACK],
+            [, WHITE, BLACK, ],
+            [, BLACK, WHITE, ],
+            [BLACK, , , WHITE]];
+
+var currentPlayer;
 
 var BoardScene = new Phaser.Class({
     Extends: Phaser.Scene,
@@ -23,18 +25,18 @@ var BoardScene = new Phaser.Class({
     },
     create: function(){
         pieces = this.add.group();
-        blackPieces = [[],[]];
-        whitePieces = [[],[]];
+        blackPieces = [[],[],[],[]];
+        whitePieces = [[],[],[],[]];
         for(i = 0; i < board.length; i++){
             for(j = 0; j < board[i].length; j++){
-                if (board[i][j] === "white"){
-                    var piece = pieces.create(i*168+100, j*168+100, 'white');
+                if (board[i][j] === WHITE){
+                    var piece = pieces.create(i*SPACING+100, j*SPACING+100, 'white');
                     whitePieces[i][j] = WHITE;
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', select, this);
                 }
-                else if(board[i][j] === "black"){
+                else if(board[i][j] === BLACK){
                     var piece = pieces.create(i*SPACING+100, j*SPACING+100, 'black');
                     blackPieces[i][j] = BLACK;
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
@@ -59,23 +61,28 @@ var BoardScene = new Phaser.Class({
         graphics.strokeRect(0, 0, 148, 148);
         var texture = graphics.generateTexture('box', 148, 148)
         graphics.destroy();
+
+        currentPlayer = WHITE;
     }
 });
 
 function select(piece){
-    if (piece == selectedPiece){
-        piece.clearTint();
-        selectedPiece = null;
-        selectZones.clear(true, true);
-    }
-    else{
-        if(selectedPiece != null){
-            selectedPiece.clearTint();
+    console.log(piece);
+    if((piece.texture.key === 'white' & currentPlayer === WHITE) || (piece.texture.key == 'black' & currentPlayer === BLACK)){
+        if (piece == selectedPiece){
+            piece.clearTint();
+            selectedPiece = null;
             selectZones.clear(true, true);
         }
-        selectedPiece = piece;
-        piece.setTintFill(0xff0000);
-        findPieces(pieces);
+        else{
+            if(selectedPiece != null){
+                selectedPiece.clearTint();
+                selectZones.clear(true, true);
+            }
+            selectedPiece = piece;
+            piece.setTintFill(0xff0000);
+            findPieces(pieces);
+        }
     }
 }
 
@@ -177,7 +184,6 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
 
     var downZone = null;
-    console.log(selectedPiece.y);
     if (selectedPiece.y === 604) {
     }
     else if(downPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y + SPACING) === undefined){
@@ -197,6 +203,7 @@ function move(zone){
     selectedPiece.y = zone.y;
     selectedPiece = null;
     selectZones.clear(true, true);
+    currentPlayer = currentPlayer * -1;
 }
 
 
