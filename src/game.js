@@ -1,11 +1,12 @@
 const SPACING = 168; // Spacing between pieces
 const WHITE = 1;
 const BLACK = -1;
+const BEGINNING = 100;
+const END = 604;
+
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
 var selectZones;  // The group that stores the sprites for selecting your piece's move
-var whitePieces; 
-var blackPieces;
 var board =[[WHITE, , , BLACK],
             [, WHITE, BLACK, ],
             [, BLACK, WHITE, ],
@@ -25,20 +26,16 @@ var BoardScene = new Phaser.Class({
     },
     create: function(){
         pieces = this.add.group();
-        blackPieces = [[],[],[],[]];
-        whitePieces = [[],[],[],[]];
         for(i = 0; i < board.length; i++){
             for(j = 0; j < board[i].length; j++){
                 if (board[i][j] === WHITE){
-                    var piece = pieces.create(i*SPACING+100, j*SPACING+100, 'white');
-                    whitePieces[i][j] = WHITE;
+                    var piece = pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'white');
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', select, this);
                 }
                 else if(board[i][j] === BLACK){
-                    var piece = pieces.create(i*SPACING+100, j*SPACING+100, 'black');
-                    blackPieces[i][j] = BLACK;
+                    var piece = pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'black');
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', select, this);
@@ -141,7 +138,7 @@ function findPieces(groupArray){
 function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown){
     var leftZone = null;
     //Check if the selected piece is on the left side of the board
-    if (selectedPiece.x === 100) {
+    if (selectedPiece.x === BEGINNING) {
     } 
     // Checking if there is a piece to left and there isn't one directly next to selected piece 
     else if(leftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y) === undefined){
@@ -149,7 +146,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     } 
     // Case where there are no pieces to the left
     else if(noneLeft === true) {
-        leftZone = selectZones.create(100, selectedPiece.y, 'box');
+        leftZone = selectZones.create(BEGINNING, selectedPiece.y, 'box');
     }
     // If a leftZone has been created, set it as interactive and set a listener.
     if(leftZone !== null){
@@ -158,12 +155,12 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
 
     var rightZone = null;
-    if (selectedPiece.x === 604) {
+    if (selectedPiece.x === END) {
     }
     else if(rightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y) === undefined){
         rightZone = selectZones.create(rightPiece.x - SPACING, rightPiece.y, 'box');
     }else if(noneRight === true) {
-        rightZone = selectZones.create(604, selectedPiece.y, 'box');
+        rightZone = selectZones.create(END, selectedPiece.y, 'box');
     }
     if(rightZone !== null){
         rightZone.setInteractive();
@@ -171,12 +168,12 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
  
     var upZone = null;
-    if (selectedPiece.y === 100) {
+    if (selectedPiece.y === BEGINNING) {
     }
     else if(upPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y - SPACING) === undefined){
         upZone = selectZones.create(upPiece.x, upPiece.y + SPACING, 'box');
     }else if(noneUp === true) {
-        upZone = selectZones.create(selectedPiece.x, 100, 'box');
+        upZone = selectZones.create(selectedPiece.x, BEGINNING, 'box');
     }
     if(upZone !== null){
         upZone.setInteractive();
@@ -184,12 +181,12 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }
 
     var downZone = null;
-    if (selectedPiece.y === 604) {
+    if (selectedPiece.y === END) {
     }
     else if(downPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y + SPACING) === undefined){
         downZone = selectZones.create(downPiece.x, downPiece.y - SPACING, 'box');
     }else if(noneDown === true) {
-        downZone = selectZones.create(selectedPiece.x, 604, 'box');
+        downZone = selectZones.create(selectedPiece.x, END, 'box');
     }
     if(downZone !== null){
         downZone.setInteractive();
@@ -199,13 +196,39 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
 
 function move(zone){
     selectedPiece.clearTint();
+    console.log(board);
+    console.log(selectedPiece.x);
+    console.log(convertToSimple(selectedPiece.x));
+    console.log(convertToSimple(selectedPiece.y));
+    console.log(convertToSimple(zone.x))
+    console.log(zone.x);
+    board[convertToSimple(zone.x)][convertToSimple(zone.y)] = currentPlayer;
+    board[convertToSimple(selectedPiece.x)].splice(convertToSimple(selectedPiece.y), 1);
     selectedPiece.x = zone.x;
     selectedPiece.y = zone.y;
     selectedPiece = null;
     selectZones.clear(true, true);
+    if (currentPlayer === WHITE){
+        checkWin();
+    }
+    else{
+        checkWin();
+    }
     currentPlayer = currentPlayer * -1;
 }
 
+function convertToSimple(coord){
+    if(coord === BEGINNING){
+        return coord - BEGINNING;
+    }
+    else{
+        return (coord - BEGINNING) / SPACING;
+    }
+}
+
+function checkWin(){
+
+}
 
 var config = {
     type: Phaser.AUTO,
