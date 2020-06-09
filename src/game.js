@@ -1,7 +1,11 @@
 const SPACING = 168; // Spacing between pieces
+const WHITE = 1;
+const BLACK = 0;
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
 var selectZones;  // The group that stores the sprites for selecting your piece's move
+var whitePieces; 
+var blackPieces;
 var board =[["white", "", "", "black"],
             ["", "white","black", ""],
             ["", "black", "white", ""],
@@ -19,16 +23,20 @@ var BoardScene = new Phaser.Class({
     },
     create: function(){
         pieces = this.add.group();
+        blackPieces = [[],[]];
+        whitePieces = [[],[]];
         for(i = 0; i < board.length; i++){
             for(j = 0; j < board[i].length; j++){
                 if (board[i][j] === "white"){
                     var piece = pieces.create(i*168+100, j*168+100, 'white');
+                    whitePieces[i][j] = WHITE;
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', select, this);
                 }
                 else if(board[i][j] === "black"){
                     var piece = pieces.create(i*SPACING+100, j*SPACING+100, 'black');
+                    blackPieces[i][j] = BLACK;
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', select, this);
