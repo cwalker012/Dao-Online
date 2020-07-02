@@ -7,10 +7,11 @@ const END = 604;
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
 var selectZones;  // The group that stores the sprites for selecting your piece's move
-var board =[[WHITE, , , BLACK],
-            [, WHITE, BLACK, ],
-            [, BLACK, WHITE, ],
-            [BLACK, , , WHITE]];
+var board =[[WHITE, null, null, BLACK],
+            [null, WHITE, BLACK, null],
+            [null, BLACK, WHITE, null],
+            [BLACK, null, null, WHITE]];
+console.log(board);
 
 var currentPlayer;
 
@@ -64,7 +65,7 @@ var BoardScene = new Phaser.Class({
 });
 
 function select(piece){
-    console.log(piece);
+    console.log(piece.y);
     if((piece.texture.key === 'white' & currentPlayer === WHITE) || (piece.texture.key == 'black' & currentPlayer === BLACK)){
         if (piece == selectedPiece){
             piece.clearTint();
@@ -92,6 +93,14 @@ function findPieces(groupArray){
     var noneUp = true;
     var downPiece = null;
     var noneDown = true;
+    var upLeftPiece = null;
+    var noneUpLeft = true;
+    var upRightPiece = null;
+    var noneUpRight = true;
+    var downLeftPiece = null;
+    var noneDownLeft = true;
+    var downRightPiece = null;
+    var noneDownRight = true;
     var groupArray = groupArray.children.entries;
     for(i = 0; i < groupArray.length; i++) {
         if(groupArray[i] !== selectedPiece){
@@ -130,7 +139,87 @@ function findPieces(groupArray){
             }
         }
     }
+    //For loop checking pieces going up left diagonally
+    // - x - y
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y - SPACING) !== undefined){
+        noneUpLeft = false;
+    }
+    var y = selectedPiece.y - SPACING;
+    var subY = true;
+    for(var x = selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
+        y = y - SPACING;
+        subY = false;
+        if(y > BEGINNING){
+            diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+            if(noneUpLeft === true & diagPiece !== undefined){
+                noneUpLeft = false;
+                upLeftPiece = diagPiece;
+            }
+            else{
+                subY = true;
+            }
+        }
+        else {
+            subY = true;
+            break;
+        }
+    }
+    if(selectedPiece.x !== BEGINNING & selectedPiece.y !== BEGINNING){
+        if(noneUpLeft & subY === false){
+            console.log('here');
+            activate(selectZones.create(x + SPACING, y + SPACING, 'box'))
+        }
+        else if(noneUpLeft & subY){
+            console.log(x - selectedPiece.x + " x");
+            console.log(y - selectedPiece.y + " y");
+            if(x - selectedPiece.x === y - selectedPiece.y){
+                activate(selectZones.create(x + SPACING, y + SPACING, 'box')) 
+            }
+            else{
+                activate(selectZones.create(x + SPACING, y, 'box'))
+            }
+        }
+    }  
+    
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y - SPACING) !== undefined){
+        noneUpRight = false;
+    }
+    var y = selectedPiece.y - SPACING;
+    for(x = selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
+        y = y - SPACING;
+        diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        if(noneUpRight === true & diagPiece !== undefined){
+            noneUpRight = false;
+            upRightPiece = diagPiece;
+        }
+    }
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) !== undefined){
+        noneUpRight = false;
+    }
+    var y = selectedPiece.y + SPACING;
+    for(x = selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
+        y = y + SPACING;
+        diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        if(noneDownLeft === true & diagPiece !== undefined){
+            noneDownLeft = false;
+            downLeftPiece = diagPiece;
+        }
+    }
+
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y + SPACING) !== undefined){
+        noneUpRight = false;
+    }
+    var y = selectedPiece.y + SPACING;
+    for(x = selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
+        y = y + SPACING;
+        diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        if(noneDownRight === true & diagPiece !== undefined){
+            noneDownRight = false;
+            downRightPiece = diagPiece;
+        }
+    }
     determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown);
+    determineDiagMoves(upLeftPiece, noneUpLeft, upRightPiece, noneUpRight, downLeftPiece, noneDownLeft, downRightPiece, noneDownRight);
 }
 
 /* Determine takes the pieces and boolean used to determine where to
@@ -149,10 +238,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
         leftZone = selectZones.create(BEGINNING, selectedPiece.y, 'box');
     }
     // If a leftZone has been created, set it as interactive and set a listener.
-    if(leftZone !== null){
-        leftZone.setInteractive();
-        leftZone.on('moved', move, this);
-    }
+    activate(leftZone);
 
     var rightZone = null;
     if (selectedPiece.x === END) {
@@ -162,10 +248,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }else if(noneRight === true) {
         rightZone = selectZones.create(END, selectedPiece.y, 'box');
     }
-    if(rightZone !== null){
-        rightZone.setInteractive();
-        rightZone.on('moved', move, this);
-    }
+    activate(rightZone);
  
     var upZone = null;
     if (selectedPiece.y === BEGINNING) {
@@ -175,10 +258,7 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }else if(noneUp === true) {
         upZone = selectZones.create(selectedPiece.x, BEGINNING, 'box');
     }
-    if(upZone !== null){
-        upZone.setInteractive();
-        upZone.on('moved', move, this);
-    }
+    activate(upZone);
 
     var downZone = null;
     if (selectedPiece.y === END) {
@@ -188,46 +268,100 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     }else if(noneDown === true) {
         downZone = selectZones.create(selectedPiece.x, END, 'box');
     }
-    if(downZone !== null){
-        downZone.setInteractive();
-        downZone.on('moved', move, this);
+    activate(downZone);
+}
+
+function determineDiagMoves(upLeftPiece, upRightPiece, downLeftPiece, downRightPiece){
+    var upLeftZone = null;
+    if(selectedPiece.x === BEGINNING || selectedPiece.y === BEGINNING){
+
     }
+    else if(upLeftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y - SPACING) === undefined){
+        console.log("I'm here");
+        upLeftZone = selectZones.create(upLeftPiece.x + SPACING, upLeftPiece.y + SPACING, 'box');
+    }
+    activate(upLeftZone);
+
+    var upRightZone = null;
+    if(selectedPiece.x === END || selectedPiece.y === BEGINNING){
+
+    }
+    else if(upRightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y - SPACING) === undefined){
+        upRightZone = selectZones.create(upRightPiece.x - SPACING, upRightPiece.y + SPACING, 'box');
+    }
+    activate(upRightZone);
+
+    var downLeftZone = null;
+    if(selectedPiece.x === BEGINNING || selectedPiece.x === BEGINNING){
+
+    }
+    else if(downLeftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) === undefined){
+        downLeftZone = selectZones.create(downLeftPiece.x + SPACING, downLeftPiece.y - SPACING, 'box');
+    }
+    activate(downLeftZone);
+
+    var downRightZone = null;
+    if(selectedPiece.x === BEGINNING || selectedPiece.x === BEGINNING){
+
+    }
+    else if(downRightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) === undefined){
+        downRightZone = selectZones.create(downRightPiece.x + SPACING, downRightPiece.y - SPACING, 'box');
+    }
+    activate(downRightZone);
 }
 
 function move(zone){
     selectedPiece.clearTint();
-    console.log(board);
-    console.log(selectedPiece.x);
-    console.log(convertToSimple(selectedPiece.x));
-    console.log(convertToSimple(selectedPiece.y));
-    console.log(convertToSimple(zone.x))
-    console.log(zone.x);
-    board[convertToSimple(zone.x)][convertToSimple(zone.y)] = currentPlayer;
-    board[convertToSimple(selectedPiece.x)].splice(convertToSimple(selectedPiece.y), 1);
+    board[convertToSimple(zone.y)][convertToSimple(zone.x)] = currentPlayer;
+    board[convertToSimple(selectedPiece.y)][convertToSimple(selectedPiece.x)] = null;
     selectedPiece.x = zone.x;
     selectedPiece.y = zone.y;
     selectedPiece = null;
     selectZones.clear(true, true);
-    if (currentPlayer === WHITE){
-        checkWin();
-    }
-    else{
-        checkWin();
-    }
+    console.log(board);
+    console.log(checkWin() + " wow");
     currentPlayer = currentPlayer * -1;
+}
+
+function activate(zone){
+    if (zone !== null){
+        zone.setInteractive();
+        zone.on('moved', move, this);
+    }
 }
 
 function convertToSimple(coord){
     if(coord === BEGINNING){
         return coord - BEGINNING;
-    }
-    else{
+    } else {
         return (coord - BEGINNING) / SPACING;
     }
 }
 
 function checkWin(){
+    return (checkCorners() || checkSquare() /*|| checkLine()*/);
+}
 
+function checkCorners(){
+    if(board[0][0] === currentPlayer & board[0][3] === currentPlayer & board[3][0] === currentPlayer & board[3][3] === currentPlayer){
+        return true;
+    }
+    return false;
+}
+
+function checkSquare(){
+    for(i = 0; i < board.length - 1; i++){
+        for(j = 0; j < board[i].length -1; j++){
+            topL = board[i][j];
+            topR = board[i+1][j];
+            botL = board[i][j+1];
+            botR = board[i+1][j+1];
+            if (topL === currentPlayer & topR === currentPlayer & botL === currentPlayer & botR === currentPlayer){
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 var config = {
