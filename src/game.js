@@ -11,6 +11,7 @@ var board =[[WHITE, null, null, BLACK],
             [null, WHITE, BLACK, null],
             [null, BLACK, WHITE, null],
             [BLACK, null, null, WHITE]];
+var lastPiece = null;
 console.log(board);
 
 var currentPlayer;
@@ -312,10 +313,11 @@ function determineDiagMoves(upLeftPiece, upRightPiece, downLeftPiece, downRightP
 
 function move(zone){
     selectedPiece.clearTint();
-    board[convertToSimple(zone.y)][convertToSimple(zone.x)] = currentPlayer;
-    board[convertToSimple(selectedPiece.y)][convertToSimple(selectedPiece.x)] = null;
+    board[simplify(zone.y)][simplify(zone.x)] = currentPlayer;
+    board[simplify(selectedPiece.y)][simplify(selectedPiece.x)] = null;
     selectedPiece.x = zone.x;
     selectedPiece.y = zone.y;
+    lastPiece = selectedPiece;
     selectedPiece = null;
     selectZones.clear(true, true);
     console.log(board);
@@ -330,7 +332,7 @@ function activate(zone){
     }
 }
 
-function convertToSimple(coord){
+function simplify(coord){
     if(coord === BEGINNING){
         return coord - BEGINNING;
     } else {
@@ -339,7 +341,7 @@ function convertToSimple(coord){
 }
 
 function checkWin(){
-    return (checkCorners() || checkSquare() /*|| checkLine()*/);
+    return (checkCorners() || checkSquare() || checkLine());
 }
 
 function checkCorners(){
@@ -362,6 +364,22 @@ function checkSquare(){
         }
     }
     return false;
+}
+
+function checkLine(){
+    var row = simplify(lastPiece.y);
+    var col = simplify(lastPiece.x);
+    var horiz = true;
+    var vert = true;
+    for (i = 0; i < board.length; i++){
+        if (board[i][col] != currentPlayer){
+            vert = false;
+        }
+        if(board[row][i] != currentPlayer){
+            horiz = false;
+        }
+    }
+    return (vert || horiz);
 }
 
 var config = {
