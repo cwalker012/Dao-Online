@@ -278,7 +278,6 @@ function determineDiagMoves(upLeftPiece, upRightPiece, downLeftPiece, downRightP
 
     }
     else if(upLeftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y - SPACING) === undefined){
-        console.log("I'm here");
         upLeftZone = selectZones.create(upLeftPiece.x + SPACING, upLeftPiece.y + SPACING, 'box');
     }
     activate(upLeftZone);
@@ -320,8 +319,8 @@ function move(zone){
     lastPiece = selectedPiece;
     selectedPiece = null;
     selectZones.clear(true, true);
-    console.log(board);
     console.log(checkWin() + " wow");
+    console.log((checkEachCornerFail()))
     currentPlayer = currentPlayer * -1;
 }
 
@@ -345,6 +344,7 @@ function checkWin(){
 }
 
 function checkCorners(){
+    console.log(board);
     if(board[0][0] === currentPlayer & board[0][3] === currentPlayer & board[3][0] === currentPlayer & board[3][3] === currentPlayer){
         return true;
     }
@@ -380,6 +380,43 @@ function checkLine(){
         }
     }
     return (vert || horiz);
+}
+
+function checkEachCornerFail(){
+    for(x = 0; x < board.length; x += 3){
+        for(y = 0; y < board[x].length; y +=3){
+            if (board[x][y] === currentPlayer * -1){
+                if(checkCornerFail(x, y)){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkCornerFail(x, y){
+    if(x === 0 & y === 0){
+        if(board[x+1][y] == currentPlayer & board[x][y+1] == currentPlayer & board[x+1][y+1] == currentPlayer){
+            return true;
+        }
+    }
+    else if(x === 3 & y === 0){
+        if(board[x - 1][y] == currentPlayer & board[x][y + 1] == currentPlayer & board[x - 1][y + 1] == currentPlayer){
+            return true;
+        }
+    }
+    else if (x === 0 & y === 3){
+        if(board[x + 1][y] == currentPlayer & board[x][y - 1] == currentPlayer & board[x + 1][y - 1] == currentPlayer){
+            return true;
+        }
+    }
+    else{
+        if(board[x - 1][y] == currentPlayer & board[x][y - 1] == currentPlayer & board[x - 1][y - 1] == currentPlayer){
+            return true;
+        }
+    }
+    return false;
 }
 
 var config = {
