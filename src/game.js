@@ -1,15 +1,18 @@
 const SPACING = 168; // Spacing between pieces
 const WHITE = 1;
 const BLACK = -1;
+const BEGINNING = 100;
+const END = 604;
+
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
 var selectZones;  // The group that stores the sprites for selecting your piece's move
-var whitePieces; 
-var blackPieces;
-var board =[[WHITE, , , BLACK],
-            [, WHITE, BLACK, ],
-            [, BLACK, WHITE, ],
-            [BLACK, , , WHITE]];
+var board =[[WHITE, null, null, BLACK],
+            [null, WHITE, BLACK, null],
+            [null, BLACK, WHITE, null],
+            [BLACK, null, null, WHITE]];
+var lastPiece = null;
+console.log(board);
 
 var currentPlayer;
 
@@ -25,20 +28,16 @@ var BoardScene = new Phaser.Class({
     },
     create: function(){
         pieces = this.add.group();
-        blackPieces = [[],[],[],[]];
-        whitePieces = [[],[],[],[]];
         for(i = 0; i < board.length; i++){
             for(j = 0; j < board[i].length; j++){
                 if (board[i][j] === WHITE){
-                    var piece = pieces.create(i*SPACING+100, j*SPACING+100, 'white');
-                    whitePieces[i][j] = WHITE;
+                    var piece = pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'white');
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', select, this);
                 }
                 else if(board[i][j] === BLACK){
-                    var piece = pieces.create(i*SPACING+100, j*SPACING+100, 'black');
-                    blackPieces[i][j] = BLACK;
+                    var piece = pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'black');
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', select, this);
@@ -67,7 +66,7 @@ var BoardScene = new Phaser.Class({
 });
 
 function select(piece){
-    console.log(piece);
+    console.log(piece.y);
     if((piece.texture.key === 'white' & currentPlayer === WHITE) || (piece.texture.key == 'black' & currentPlayer === BLACK)){
         if (piece == selectedPiece){
             piece.clearTint();
@@ -95,6 +94,14 @@ function findPieces(groupArray){
     var noneUp = true;
     var downPiece = null;
     var noneDown = true;
+    var upLeftPiece = null;
+    var noneUpLeft = true;
+    var upRightPiece = null;
+    var noneUpRight = true;
+    var downLeftPiece = null;
+    var noneDownLeft = true;
+    var downRightPiece = null;
+    var noneDownRight = true;
     var groupArray = groupArray.children.entries;
     for(i = 0; i < groupArray.length; i++) {
         if(groupArray[i] !== selectedPiece){
@@ -133,7 +140,87 @@ function findPieces(groupArray){
             }
         }
     }
+    //For loop checking pieces going up left diagonally
+    // - x - y
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y - SPACING) !== undefined){
+        noneUpLeft = false;
+    }
+    var y = selectedPiece.y - SPACING;
+    var subY = true;
+    for(var x = selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
+        y = y - SPACING;
+        subY = false;
+        if(y > BEGINNING){
+            diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+            if(noneUpLeft === true & diagPiece !== undefined){
+                noneUpLeft = false;
+                upLeftPiece = diagPiece;
+            }
+            else{
+                subY = true;
+            }
+        }
+        else {
+            subY = true;
+            break;
+        }
+    }
+    if(selectedPiece.x !== BEGINNING & selectedPiece.y !== BEGINNING){
+        if(noneUpLeft & subY === false){
+            console.log('here');
+            activate(selectZones.create(x + SPACING, y + SPACING, 'box'))
+        }
+        else if(noneUpLeft & subY){
+            console.log(x - selectedPiece.x + " x");
+            console.log(y - selectedPiece.y + " y");
+            if(x - selectedPiece.x === y - selectedPiece.y){
+                activate(selectZones.create(x + SPACING, y + SPACING, 'box')) 
+            }
+            else{
+                activate(selectZones.create(x + SPACING, y, 'box'))
+            }
+        }
+    }  
+    
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y - SPACING) !== undefined){
+        noneUpRight = false;
+    }
+    var y = selectedPiece.y - SPACING;
+    for(x = selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
+        y = y - SPACING;
+        diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        if(noneUpRight === true & diagPiece !== undefined){
+            noneUpRight = false;
+            upRightPiece = diagPiece;
+        }
+    }
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) !== undefined){
+        noneUpRight = false;
+    }
+    var y = selectedPiece.y + SPACING;
+    for(x = selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
+        y = y + SPACING;
+        diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        if(noneDownLeft === true & diagPiece !== undefined){
+            noneDownLeft = false;
+            downLeftPiece = diagPiece;
+        }
+    }
+
+    if (pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y + SPACING) !== undefined){
+        noneUpRight = false;
+    }
+    var y = selectedPiece.y + SPACING;
+    for(x = selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
+        y = y + SPACING;
+        diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        if(noneDownRight === true & diagPiece !== undefined){
+            noneDownRight = false;
+            downRightPiece = diagPiece;
+        }
+    }
     determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown);
+    determineDiagMoves(upLeftPiece, noneUpLeft, upRightPiece, noneUpRight, downLeftPiece, noneDownLeft, downRightPiece, noneDownRight);
 }
 
 /* Determine takes the pieces and boolean used to determine where to
@@ -141,7 +228,7 @@ function findPieces(groupArray){
 function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown){
     var leftZone = null;
     //Check if the selected piece is on the left side of the board
-    if (selectedPiece.x === 100) {
+    if (selectedPiece.x === BEGINNING) {
     } 
     // Checking if there is a piece to left and there isn't one directly next to selected piece 
     else if(leftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y) === undefined){
@@ -149,63 +236,188 @@ function determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, non
     } 
     // Case where there are no pieces to the left
     else if(noneLeft === true) {
-        leftZone = selectZones.create(100, selectedPiece.y, 'box');
+        leftZone = selectZones.create(BEGINNING, selectedPiece.y, 'box');
     }
     // If a leftZone has been created, set it as interactive and set a listener.
-    if(leftZone !== null){
-        leftZone.setInteractive();
-        leftZone.on('moved', move, this);
-    }
+    activate(leftZone);
 
     var rightZone = null;
-    if (selectedPiece.x === 604) {
+    if (selectedPiece.x === END) {
     }
     else if(rightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y) === undefined){
         rightZone = selectZones.create(rightPiece.x - SPACING, rightPiece.y, 'box');
     }else if(noneRight === true) {
-        rightZone = selectZones.create(604, selectedPiece.y, 'box');
+        rightZone = selectZones.create(END, selectedPiece.y, 'box');
     }
-    if(rightZone !== null){
-        rightZone.setInteractive();
-        rightZone.on('moved', move, this);
-    }
+    activate(rightZone);
  
     var upZone = null;
-    if (selectedPiece.y === 100) {
+    if (selectedPiece.y === BEGINNING) {
     }
     else if(upPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y - SPACING) === undefined){
         upZone = selectZones.create(upPiece.x, upPiece.y + SPACING, 'box');
     }else if(noneUp === true) {
-        upZone = selectZones.create(selectedPiece.x, 100, 'box');
+        upZone = selectZones.create(selectedPiece.x, BEGINNING, 'box');
     }
-    if(upZone !== null){
-        upZone.setInteractive();
-        upZone.on('moved', move, this);
-    }
+    activate(upZone);
 
     var downZone = null;
-    if (selectedPiece.y === 604) {
+    if (selectedPiece.y === END) {
     }
     else if(downPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y + SPACING) === undefined){
         downZone = selectZones.create(downPiece.x, downPiece.y - SPACING, 'box');
     }else if(noneDown === true) {
-        downZone = selectZones.create(selectedPiece.x, 604, 'box');
+        downZone = selectZones.create(selectedPiece.x, END, 'box');
     }
-    if(downZone !== null){
-        downZone.setInteractive();
-        downZone.on('moved', move, this);
+    activate(downZone);
+}
+
+function determineDiagMoves(upLeftPiece, upRightPiece, downLeftPiece, downRightPiece){
+    var upLeftZone = null;
+    if(selectedPiece.x === BEGINNING || selectedPiece.y === BEGINNING){
+
     }
+    else if(upLeftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y - SPACING) === undefined){
+        upLeftZone = selectZones.create(upLeftPiece.x + SPACING, upLeftPiece.y + SPACING, 'box');
+    }
+    activate(upLeftZone);
+
+    var upRightZone = null;
+    if(selectedPiece.x === END || selectedPiece.y === BEGINNING){
+
+    }
+    else if(upRightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y - SPACING) === undefined){
+        upRightZone = selectZones.create(upRightPiece.x - SPACING, upRightPiece.y + SPACING, 'box');
+    }
+    activate(upRightZone);
+
+    var downLeftZone = null;
+    if(selectedPiece.x === BEGINNING || selectedPiece.x === BEGINNING){
+
+    }
+    else if(downLeftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) === undefined){
+        downLeftZone = selectZones.create(downLeftPiece.x + SPACING, downLeftPiece.y - SPACING, 'box');
+    }
+    activate(downLeftZone);
+
+    var downRightZone = null;
+    if(selectedPiece.x === BEGINNING || selectedPiece.x === BEGINNING){
+
+    }
+    else if(downRightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) === undefined){
+        downRightZone = selectZones.create(downRightPiece.x + SPACING, downRightPiece.y - SPACING, 'box');
+    }
+    activate(downRightZone);
 }
 
 function move(zone){
     selectedPiece.clearTint();
+    board[simplify(zone.y)][simplify(zone.x)] = currentPlayer;
+    board[simplify(selectedPiece.y)][simplify(selectedPiece.x)] = null;
     selectedPiece.x = zone.x;
     selectedPiece.y = zone.y;
+    lastPiece = selectedPiece;
     selectedPiece = null;
     selectZones.clear(true, true);
+    console.log(checkWin() + " wow");
+    console.log((checkEachCornerFail()))
     currentPlayer = currentPlayer * -1;
 }
 
+function activate(zone){
+    if (zone !== null){
+        zone.setInteractive();
+        zone.on('moved', move, this);
+    }
+}
+
+function simplify(coord){
+    if(coord === BEGINNING){
+        return coord - BEGINNING;
+    } else {
+        return (coord - BEGINNING) / SPACING;
+    }
+}
+
+function checkWin(){
+    return (checkCorners() || checkSquare() || checkLine());
+}
+
+function checkCorners(){
+    console.log(board);
+    if(board[0][0] === currentPlayer & board[0][3] === currentPlayer & board[3][0] === currentPlayer & board[3][3] === currentPlayer){
+        return true;
+    }
+    return false;
+}
+
+function checkSquare(){
+    for(i = 0; i < board.length - 1; i++){
+        for(j = 0; j < board[i].length -1; j++){
+            topL = board[i][j];
+            topR = board[i+1][j];
+            botL = board[i][j+1];
+            botR = board[i+1][j+1];
+            if (topL === currentPlayer & topR === currentPlayer & botL === currentPlayer & botR === currentPlayer){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function checkLine(){
+    var row = simplify(lastPiece.y);
+    var col = simplify(lastPiece.x);
+    var horiz = true;
+    var vert = true;
+    for (i = 0; i < board.length; i++){
+        if (board[i][col] != currentPlayer){
+            vert = false;
+        }
+        if(board[row][i] != currentPlayer){
+            horiz = false;
+        }
+    }
+    return (vert || horiz);
+}
+
+function checkEachCornerFail(){
+    for(x = 0; x < board.length; x += 3){
+        for(y = 0; y < board[x].length; y +=3){
+            if (board[x][y] === currentPlayer * -1){
+                if(checkCornerFail(x, y)){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkCornerFail(x, y){
+    if(x === 0 & y === 0){
+        if(board[x+1][y] == currentPlayer & board[x][y+1] == currentPlayer & board[x+1][y+1] == currentPlayer){
+            return true;
+        }
+    }
+    else if(x === 3 & y === 0){
+        if(board[x - 1][y] == currentPlayer & board[x][y + 1] == currentPlayer & board[x - 1][y + 1] == currentPlayer){
+            return true;
+        }
+    }
+    else if (x === 0 & y === 3){
+        if(board[x + 1][y] == currentPlayer & board[x][y - 1] == currentPlayer & board[x + 1][y - 1] == currentPlayer){
+            return true;
+        }
+    }
+    else{
+        if(board[x - 1][y] == currentPlayer & board[x][y - 1] == currentPlayer & board[x - 1][y - 1] == currentPlayer){
+            return true;
+        }
+    }
+    return false;
+}
 
 var config = {
     type: Phaser.AUTO,
