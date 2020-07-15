@@ -12,6 +12,8 @@ var board =[[WHITE, null, null, BLACK],
             [null, BLACK, WHITE, null],
             [BLACK, null, null, WHITE]];
 var lastPiece = null;
+var whiteWinText;
+var blackWinText;
 console.log(board);
 
 var currentPlayer;
@@ -60,6 +62,12 @@ var BoardScene = new Phaser.Class({
         graphics.strokeRect(0, 0, 148, 148);
         var texture = graphics.generateTexture('box', 148, 148)
         graphics.destroy();
+
+        var middle = (BEGINNING + END)/2;
+        whiteWinText = this.add.text(middle - 160, middle - 25, 'White Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
+        blackWinText = this.add.text(middle - 160, middle - 25, 'black Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
+        whiteWinText.setDepth(1);
+        blackWinText.setDepth(1);
 
         currentPlayer = WHITE;
     }
@@ -320,8 +328,27 @@ function move(zone){
     selectedPiece = null;
     selectZones.clear(true, true);
     console.log(checkWin() + " wow");
-    console.log((checkEachCornerFail()))
-    currentPlayer = currentPlayer * -1;
+    console.log((checkEachCornerFail()));
+    console.log(BoardScene);
+    if(checkWin()){
+        if(currentPlayer == 1){
+            whiteWinText.setVisible(true);
+        }
+        else{
+            blackWinText.setVisible(true);
+        }
+    }
+    else if(checkEachCornerFail()){
+        if(currentPlayer == 1){
+            blackWinText.setVisible(true);
+        }
+        else{
+            whiteWinText.setVisible(true);
+        }
+    }
+    else{
+        currentPlayer = currentPlayer * -1;
+    }
 }
 
 function activate(zone){
@@ -432,3 +459,4 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
+game.scene.start('boardScene');
