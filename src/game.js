@@ -14,6 +14,7 @@ var board =[[WHITE, null, null, BLACK],
 var lastPiece = null;
 var whiteWinText;
 var blackWinText;
+var overlay;
 console.log(board);
 
 var currentPlayer;
@@ -27,6 +28,7 @@ var BoardScene = new Phaser.Class({
     preload: function(){
         this.load.image('black', './src/assets/black.png');
         this.load.image('white', './src/assets/white.png');
+        this.load.image('overlay', '/src/assets/darken.png')
     },
     create: function(){
         pieces = this.add.group();
@@ -65,9 +67,11 @@ var BoardScene = new Phaser.Class({
 
         var middle = (BEGINNING + END)/2;
         whiteWinText = this.add.text(middle - 160, middle - 25, 'White Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
-        blackWinText = this.add.text(middle - 160, middle - 25, 'black Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
+        blackWinText = this.add.text(middle - 160, middle - 25, 'Black Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
         whiteWinText.setDepth(1);
         blackWinText.setDepth(1);
+
+        overlay = this.add.image(0, 0, 'overlay').setVisible(false);
 
         currentPlayer = WHITE;
     }
@@ -332,18 +336,18 @@ function move(zone){
     console.log(BoardScene);
     if(checkWin()){
         if(currentPlayer == 1){
-            whiteWinText.setVisible(true);
+            win('White');
         }
         else{
-            blackWinText.setVisible(true);
+            win('Black');
         }
     }
     else if(checkEachCornerFail()){
         if(currentPlayer == 1){
-            blackWinText.setVisible(true);
+            win('Black');
         }
         else{
-            whiteWinText.setVisible(true);
+            win('White');
         }
     }
     else{
@@ -444,6 +448,17 @@ function checkCornerFail(x, y){
         }
     }
     return false;
+}
+
+function win(player){
+    if(player === 'white'){
+        overlay.setVisible(true);
+        whiteWinText.setVisible(true);
+    }
+    else{
+        overlay.setVisible(true);
+        blackWinText.setVisible(true);
+    }
 }
 
 var config = {
