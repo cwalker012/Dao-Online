@@ -15,6 +15,9 @@ var lastPiece = null;
 var whiteWinText;
 var blackWinText;
 var overlay;
+var turnNum;
+var playerText;
+var turnText;
 console.log(board);
 
 var currentPlayer;
@@ -72,8 +75,13 @@ var BoardScene = new Phaser.Class({
         blackWinText.setDepth(1);
 
         overlay = this.add.image(0, 0, 'overlay').setVisible(false);
+        
+        currentPlayer = WHITE
 
-        currentPlayer = WHITE;
+        turnNum = 1;
+
+        playerText = this.add.text(25, 752, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '55px', align: 'left'});
+        turnText = this.add.text(END - 170, 752, 'Turn: ' +  turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '55px', align:'right'});
     }
 });
 
@@ -322,6 +330,7 @@ function determineDiagMoves(upLeftPiece, upRightPiece, downLeftPiece, downRightP
     activate(downRightZone);
 }
 
+// The function for handling the action of selecting a box to move a piece
 function move(zone){
     selectedPiece.clearTint();
     board[simplify(zone.y)][simplify(zone.x)] = currentPlayer;
@@ -331,9 +340,7 @@ function move(zone){
     lastPiece = selectedPiece;
     selectedPiece = null;
     selectZones.clear(true, true);
-    console.log(checkWin() + " wow");
-    console.log((checkEachCornerFail()));
-    console.log(BoardScene);
+
     if(checkWin()){
         if(currentPlayer == 1){
             win('White');
@@ -351,6 +358,13 @@ function move(zone){
         }
     }
     else{
+        if (currentPlayer === BLACK){
+            turnText.text = 'Turn: ' + (turnNum += 1);
+            playerText.text = "White's Turn";
+        }
+        else{
+            playerText.text = "Black's Turn";
+        }
         currentPlayer = currentPlayer * -1;
     }
 }
@@ -451,7 +465,7 @@ function checkCornerFail(x, y){
 }
 
 function win(player){
-    if(player === 'white'){
+    if(player === 'White'){
         overlay.setVisible(true);
         whiteWinText.setVisible(true);
     }
@@ -464,7 +478,7 @@ function win(player){
 var config = {
     type: Phaser.AUTO,
     width: 702,
-    height: 702,
+    height: 852,
     backgroundColor: '#d4bd8a',
     scale: {
         mode: Phaser.Scale.FIT,
