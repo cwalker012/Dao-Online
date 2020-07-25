@@ -7,10 +7,12 @@ const END = 604;
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
 var selectZones;  // The group that stores the sprites for selecting your piece's move
+
 var board =[[WHITE, null, null, BLACK],
             [null, WHITE, BLACK, null],
             [null, BLACK, WHITE, null],
             [BLACK, null, null, WHITE]];
+
 var lastPiece = null;
 var whiteWinText;
 var blackWinText;
@@ -18,25 +20,21 @@ var overlay;
 var turnNum;
 var playerText;
 var turnText;
-console.log(board);
-
 var currentPlayer;
 
-var BoardScene = new Phaser.Class({
-    Extends: Phaser.Scene,
-    intialize:
-    function BoardScene(){
-        Phaser.Scene.call(this, {key: 'boardScene'})
-    },
-    preload: function(){
+class BoardScene extends Phaser.Scene{
+    constructor(){
+        super({key: 'boardScene', active: false})
+    }
+    preload(){
         this.load.image('black', './src/assets/black.png');
         this.load.image('white', './src/assets/white.png');
         this.load.image('overlay', '/src/assets/darken.png')
-    },
-    create: function(){
+    }
+    create(){
         pieces = this.add.group();
-        for(i = 0; i < board.length; i++){
-            for(j = 0; j < board[i].length; j++){
+        for(var i = 0; i < board.length; i++){
+            for(var j = 0; j < board[i].length; j++){
                 if (board[i][j] === WHITE){
                     var piece = pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'white');
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
@@ -60,7 +58,7 @@ var BoardScene = new Phaser.Class({
     
         // generate sprite for selection box 
         selectZones = this.add.group();
-        graphics = this.add.graphics();
+        var graphics = this.add.graphics();
         graphics.lineStyle(1, 0xFFFF00, 0.4);
         graphics.fillStyle(0xFFFF00, 0.4);
         graphics.fillRect(0, 0, 148, 148)
@@ -80,10 +78,10 @@ var BoardScene = new Phaser.Class({
 
         turnNum = 1;
 
-        playerText = this.add.text(25, 752, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '55px', align: 'left'});
-        turnText = this.add.text(END - 170, 752, 'Turn: ' +  turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '55px', align:'right'});
+        playerText = this.add.text(25, 752, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align: 'left'});
+        turnText = this.add.text(END - 170, 752, 'Turn: ' +  turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align:'right'});
     }
-});
+};
 
 function select(piece){
     console.log(piece.y);
@@ -475,6 +473,27 @@ function win(player){
     }
 }
 
+class MainMenu extends Phaser.Scene{
+    constructor(){
+        super({key: 'mainMenu', active: true})
+    }
+    create(){
+        var daoTitle = this.add.text(45, 100, 'Dao Online', { fontFamily: 'Verdana, Georgia, serif', fontSize: '110px', align: 'center'});
+        var localComp = this.add.text(120, 300, 'Local Game', { fontFamily: 'Verdana, Georgia, serif', fontSize: '80px', align: 'center'});
+        localComp.setInteractive();
+        localComp.on('clicked', play, this);
+        this.input.on('gameobjectup', function (pointer, gameObject)
+        {
+            gameObject.emit('clicked', gameObject);
+        }, this);
+    }
+};
+
+function play(localComp){
+    game.scene.stop('mainMenu');
+    game.scene.start('boardScene');
+}
+
 var config = {
     type: Phaser.AUTO,
     width: 702,
@@ -484,8 +503,7 @@ var config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: BoardScene
+    scene: [MainMenu , BoardScene],
 };
 
 var game = new Phaser.Game(config);
-game.scene.start('boardScene');
