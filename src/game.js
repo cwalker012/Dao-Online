@@ -1,8 +1,8 @@
 const SPACING = 168; // Spacing between pieces
 const WHITE = 1;
 const BLACK = -1;
-const BEGINNING = 100;
-const END = 604;
+const BEGINNING = 140;
+const END = 634;
 
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
@@ -24,12 +24,13 @@ var currentPlayer;
 
 class BoardScene extends Phaser.Scene{
     constructor(){
-        super({key: 'boardScene', active: false})
+        super({key: 'boardScene'})
     }
     preload(){
         this.load.image('black', './src/assets/black.png');
         this.load.image('white', './src/assets/white.png');
-        this.load.image('overlay', '/src/assets/darken.png')
+        this.load.image('overlay', '/src/assets/darken.png');
+        this.load.image('gear', '/src/assets/gear.png');
     }
     create(){
         pieces = this.add.group();
@@ -50,11 +51,19 @@ class BoardScene extends Phaser.Scene{
                 
             }
         }
+
         this.input.on('gameobjectup', function (pointer, gameObject)
         {
             gameObject.emit('clicked', gameObject);
             gameObject.emit('moved', gameObject);
         }, this);
+
+        overlay = this.add.image(0, 0, 'overlay').setVisible(false);
+
+        var gear = this.add.sprite(END + 110, BEGINNING - 100, 'gear');
+        gear.setScale(0.5);
+        gear.setInteractive();
+        gear.on('clicked', this.pause, this);
     
         // generate sprite for selection box 
         selectZones = this.add.group();
@@ -71,15 +80,19 @@ class BoardScene extends Phaser.Scene{
         blackWinText = this.add.text(middle - 160, middle - 25, 'Black Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
         whiteWinText.setDepth(1);
         blackWinText.setDepth(1);
-
-        overlay = this.add.image(0, 0, 'overlay').setVisible(false);
         
         currentPlayer = WHITE
 
         turnNum = 1;
 
-        playerText = this.add.text(25, 752, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align: 'left'});
-        turnText = this.add.text(END - 170, 752, 'Turn: ' +  turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align:'right'});
+        playerText = this.add.text(25, 802, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align: 'left'});
+        turnText = this.add.text(END - 120, 802, 'Turn: ' +  turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align:'right'});
+    }
+
+    pause(action){
+        console.log('Pause action');
+        this.scene.launch('pauseMenu');
+        this.scene.pause();
     }
 
     select(piece){
@@ -478,8 +491,8 @@ class MainMenu extends Phaser.Scene{
         super({key: 'mainMenu', active: true})
     }
     create(){
-        var daoTitle = this.add.text(45, 100, 'Dao Online', { fontFamily: 'Verdana, Georgia, serif', fontSize: '110px', align: 'center'});
-        var localComp = this.add.text(120, 300, 'Local Game', { fontFamily: 'Verdana, Georgia, serif', fontSize: '80px', align: 'center'});
+        var daoTitle = this.add.text(75, 100, 'Dao Online', { fontFamily: 'Verdana, Georgia, serif', fontSize: '110px', align: 'center'});
+        var localComp = this.add.text(150, 300, 'Local Game', { fontFamily: 'Verdana, Georgia, serif', fontSize: '80px', align: 'center'});
         localComp.setInteractive();
         localComp.on('clicked', this.play, this);
         this.input.on('gameobjectup', function (pointer, gameObject)
@@ -489,21 +502,53 @@ class MainMenu extends Phaser.Scene{
     }
 
     play(localComp){
-        game.scene.stop('mainMenu');
-        game.scene.start('boardScene');
+        this.scene.stop('mainMenu');
+        this.scene.start('boardScene');
     }
 };
 
+class PauseMenu extends Phaser.Scene{
+    constructor(){
+        super({key: 'pauseMenu'})
+    }
+    preload(){
+        this.load.image('overlay', '/src/assets/darken.png');
+    }
+    create(){
+        console.log("hello, this me, pause");
+        overlay = this.add.image(0, 0, 'overlay');
+        var continueText = this.add.text(100, 250, 'Resume', {fontFamily: 'Verdana, Georgia, serif', fontSize: '60px'});
+        continueText.setInteractive();
+        continueText.on('clicked', this.continue, this);
+        var mainMenu = this.add.text(100, 400, 'Exit to Main Menu', {fontFamily: 'Verdana, Georgia, serif', fontSize: '60px'});
+        mainMenu.setInteractive();
+        mainMenu.on('clicked', this.exit, this);
+        this.input.on('gameobjectup', function(pointer, gameObject){
+            gameObject.emit('clicked', gameObject);
+        }, this);
+    }
+
+    exit(mainMenu){
+        this.scene.stop();
+        this.scene.stop('boardScene');
+        this.scene.start('mainMenu');
+    }
+    continue(text){
+        this.scene.stop();
+        this.scene.resume('boardScene');
+    }
+}
+
 var config = {
     type: Phaser.AUTO,
-    width: 702,
-    height: 852,
+    width: 787,
+    height: 902,
     backgroundColor: '#d4bd8a',
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [MainMenu , BoardScene],
+    scene: [MainMenu , BoardScene, PauseMenu],
 };
 
 var game = new Phaser.Game(config);
