@@ -2,7 +2,7 @@ const SPACING = 168; // Spacing between pieces
 const WHITE = 1;
 const BLACK = -1;
 const BEGINNING = 140;
-const END = 634;
+const END = 644;
 
 var selectedPiece = null;
 var pieces;  // All the game pieces stored in a group
@@ -60,7 +60,7 @@ class BoardScene extends Phaser.Scene{
 
         overlay = this.add.image(0, 0, 'overlay').setVisible(false);
 
-        var gear = this.add.sprite(END + 110, BEGINNING - 100, 'gear');
+        var gear = this.add.sprite(END + 100, BEGINNING - 100, 'gear');
         gear.setScale(0.5);
         gear.setInteractive();
         gear.on('clicked', this.pause, this);
@@ -85,7 +85,7 @@ class BoardScene extends Phaser.Scene{
 
         turnNum = 1;
 
-        playerText = this.add.text(25, 802, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align: 'left'});
+        playerText = this.add.text(68, 802, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align: 'left'});
         turnText = this.add.text(END - 120, 802, 'Turn: ' +  turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align:'right'});
     }
 
@@ -352,7 +352,7 @@ class BoardScene extends Phaser.Scene{
         selectZones.clear(true, true);
     
         if(this.checkWin()){
-            if(currentPlayer == 1){
+            if(currentPlayer == WHITE){
                 this.win('White');
             }
             else{
