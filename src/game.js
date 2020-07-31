@@ -3,47 +3,45 @@ const WHITE = 1;
 const BLACK = -1;
 const BEGINNING = 140;
 const END = 644;
+const MIDDLE = (BEGINNING + END)/2;
 
-var selectedPiece = null;
-var pieces;  // All the game pieces stored in a group
-var selectZones;  // The group that stores the sprites for selecting your piece's move
-
-var board =[[WHITE, null, null, BLACK],
-            [null, WHITE, BLACK, null],
-            [null, BLACK, WHITE, null],
-            [BLACK, null, null, WHITE]];
-
-var lastPiece = null;
-var whiteWinText;
-var blackWinText;
-var overlay;
-var turnNum;
-var playerText;
-var turnText;
-var currentPlayer;
+var board;
 
 class BoardScene extends Phaser.Scene{
+    selectedPiece = null;
+    pieces;  // All the game pieces stored in a group
+    selectZones;  // The group that stores the sprites for selecting your piece's move
+    lastPiece = null;
+    turnNum;
+    playerText;
+    turnText;
+    currentPlayer;
+    
     constructor(){
         super({key: 'boardScene'})
     }
     preload(){
         this.load.image('black', './src/assets/black.png');
         this.load.image('white', './src/assets/white.png');
-        this.load.image('overlay', '/src/assets/darken.png');
         this.load.image('gear', '/src/assets/gear.png');
     }
     create(){
-        pieces = this.add.group();
+        board= [[WHITE, null, null, BLACK],
+                [null, WHITE, BLACK, null],
+                [null, BLACK, WHITE, null],
+                [BLACK, null, null, WHITE]];
+
+        this.pieces = this.add.group();
         for(var i = 0; i < board.length; i++){
             for(var j = 0; j < board[i].length; j++){
                 if (board[i][j] === WHITE){
-                    var piece = pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'white');
+                    var piece = this.pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'white');
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', this.select, this);
                 }
                 else if(board[i][j] === BLACK){
-                    var piece = pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'black');
+                    var piece = this.pieces.create(i*SPACING+BEGINNING, j*SPACING+BEGINNING, 'black');
                     piece.name = 'piece' + i.toString() + 'x' + j.toString();
                     piece.setInteractive();
                     piece.on('clicked', this.select, this);
@@ -58,15 +56,13 @@ class BoardScene extends Phaser.Scene{
             gameObject.emit('moved', gameObject);
         }, this);
 
-        overlay = this.add.image(0, 0, 'overlay').setVisible(false);
-
         var gear = this.add.sprite(END + 100, BEGINNING - 100, 'gear');
         gear.setScale(0.5);
         gear.setInteractive();
         gear.on('clicked', this.pause, this);
     
         // generate sprite for selection box 
-        selectZones = this.add.group();
+        this.selectZones = this.add.group();
         var graphics = this.add.graphics();
         graphics.lineStyle(1, 0xFFFF00, 0.4);
         graphics.fillStyle(0xFFFF00, 0.4);
@@ -75,18 +71,12 @@ class BoardScene extends Phaser.Scene{
         var texture = graphics.generateTexture('box', 148, 148)
         graphics.destroy();
 
-        var middle = (BEGINNING + END)/2;
-        whiteWinText = this.add.text(middle - 160, middle - 25, 'White Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
-        blackWinText = this.add.text(middle - 160, middle - 25, 'Black Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'}).setVisible(false);
-        whiteWinText.setDepth(1);
-        blackWinText.setDepth(1);
-        
-        currentPlayer = WHITE
+        this.currentPlayer = WHITE
 
-        turnNum = 1;
+        this.turnNum = 1;
 
-        playerText = this.add.text(68, 802, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align: 'left'});
-        turnText = this.add.text(END - 120, 802, 'Turn: ' +  turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align:'right'});
+        this.playerText = this.add.text(68, 802, "White's Turn", {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align: 'left'});
+        this.turnText = this.add.text(END - 120, 802, 'Turn: ' +  this.turnNum, {fontFamily: 'Verdana, Georgia, serif', fontSize: '52px', align:'right'});
     }
 
     pause(action){
@@ -97,20 +87,20 @@ class BoardScene extends Phaser.Scene{
 
     select(piece){
         console.log(piece.y);
-        if((piece.texture.key === 'white' & currentPlayer === WHITE) || (piece.texture.key == 'black' & currentPlayer === BLACK)){
-            if (piece == selectedPiece){
+        if((piece.texture.key === 'white' & this.currentPlayer === WHITE) || (piece.texture.key == 'black' & this.currentPlayer === BLACK)){
+            if (piece == this.selectedPiece){
                 piece.clearTint();
-                selectedPiece = null;
-                selectZones.clear(true, true);
+                this.selectedPiece = null;
+                this.selectZones.clear(true, true);
             }
             else{
-                if(selectedPiece != null){
-                    selectedPiece.clearTint();
-                    selectZones.clear(true, true);
+                if(this.selectedPiece != null){
+                    this.selectedPiece.clearTint();
+                    this.selectZones.clear(true, true);
                 }
-                selectedPiece = piece;
+                this.selectedPiece = piece;
                 piece.setTintFill(0xff0000);
-                this.findPieces(pieces);
+                this.findPieces(this.pieces);
             }
         }
     }
@@ -134,37 +124,37 @@ class BoardScene extends Phaser.Scene{
         var noneDownRight = true;
         var groupArray = groupArray.children.entries;
         for(var i = 0; i < groupArray.length; i++) {
-            if(groupArray[i] !== selectedPiece){
-                if(selectedPiece.y === groupArray[i].y){
-                    if(groupArray[i].x < selectedPiece.x - SPACING){
+            if(groupArray[i] !== this.selectedPiece){
+                if(this.selectedPiece.y === groupArray[i].y){
+                    if(groupArray[i].x < this.selectedPiece.x - SPACING){
                         leftPiece = groupArray[i];
                         noneLeft = false;
                     }
-                    else if(groupArray[i].x === selectedPiece.x - SPACING){
+                    else if(groupArray[i].x === this.selectedPiece.x - SPACING){
                         noneLeft = false;
                     }
-                } if(selectedPiece.y === groupArray[i].y & rightPiece === null){
-                    if(groupArray[i].x > selectedPiece.x + SPACING){
+                } if(this.selectedPiece.y === groupArray[i].y & rightPiece === null){
+                    if(groupArray[i].x > this.selectedPiece.x + SPACING){
                         rightPiece = groupArray[i];
                         noneRight = false;
                     }
-                    else if (groupArray[i].x === selectedPiece.x + SPACING){
+                    else if (groupArray[i].x === this.selectedPiece.x + SPACING){
                         noneRight = false;
                     }
-                } if (selectedPiece.x === groupArray[i].x & downPiece == null){
-                    if(groupArray[i].y > selectedPiece.y + SPACING){
+                } if (this.selectedPiece.x === groupArray[i].x & downPiece == null){
+                    if(groupArray[i].y > this.selectedPiece.y + SPACING){
                         downPiece = groupArray[i];
                         noneDown = false;
                     }
-                    else if(groupArray[i].y === selectedPiece.y + SPACING){
+                    else if(groupArray[i].y === this.selectedPiece.y + SPACING){
                         noneDown = false;
                     }
-                } if(selectedPiece.x === groupArray[i].x){
-                    if(groupArray[i].y < selectedPiece.y - SPACING){
+                } if(this.selectedPiece.x === groupArray[i].x){
+                    if(groupArray[i].y < this.selectedPiece.y - SPACING){
                         upPiece = groupArray[i];
                         noneUp = false;
                     }
-                    else if(groupArray[i].y === selectedPiece.y - SPACING){
+                    else if(groupArray[i].y === this.selectedPiece.y - SPACING){
                         noneUp = false;
                     }
                 }
@@ -172,16 +162,16 @@ class BoardScene extends Phaser.Scene{
         }
         //For loop checking pieces going up left diagonally
         // - x - y
-        if (pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y - SPACING) !== undefined){
+        if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y - SPACING) !== undefined){
             noneUpLeft = false;
         }
-        var y = selectedPiece.y - SPACING;
+        var y = this.selectedPiece.y - SPACING;
         var subY = true;
-        for(var x = selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
+        for(var x = this.selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
             y = y - SPACING;
             subY = false;
             if(y > BEGINNING){
-                diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+                diagPiece = this.pieces.getChildren().find(piece => piece.x === x & piece.y === y);
                 if(noneUpLeft === true & diagPiece !== undefined){
                     noneUpLeft = false;
                     upLeftPiece = diagPiece;
@@ -195,55 +185,55 @@ class BoardScene extends Phaser.Scene{
                 break;
             }
         }
-        if(selectedPiece.x !== BEGINNING & selectedPiece.y !== BEGINNING){
+        if(this.selectedPiece.x !== BEGINNING & this.selectedPiece.y !== BEGINNING){
             if(noneUpLeft & subY === false){
                 console.log('here');
-                this.activate(selectZones.create(x + SPACING, y + SPACING, 'box'))
+                this.activate(this.selectZones.create(x + SPACING, y + SPACING, 'box'))
             }
             else if(noneUpLeft & subY){
-                console.log(x - selectedPiece.x + " x");
-                console.log(y - selectedPiece.y + " y");
-                if(x - selectedPiece.x === y - selectedPiece.y){
-                    this.activate(selectZones.create(x + SPACING, y + SPACING, 'box')) 
+                console.log(x - this.selectedPiece.x + " x");
+                console.log(y - this.selectedPiece.y + " y");
+                if(x - this.selectedPiece.x === y - this.selectedPiece.y){
+                    this.activate(this.selectZones.create(x + SPACING, y + SPACING, 'box')) 
                 }
                 else{
-                    this.activate(selectZones.create(x + SPACING, y, 'box'))
+                    this.activate(this.selectZones.create(x + SPACING, y, 'box'))
                 }
             }
         }  
         
-        if (pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y - SPACING) !== undefined){
+        if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x + SPACING & piece.y === this.selectedPiece.y - SPACING) !== undefined){
             noneUpRight = false;
         }
-        var y = selectedPiece.y - SPACING;
-        for(var x = selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
+        var y = this.selectedPiece.y - SPACING;
+        for(var x = this.selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
             y = y - SPACING;
-            var diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+            var diagPiece = this.pieces.getChildren().find(piece => piece.x === x & piece.y === y);
             if(noneUpRight === true & diagPiece !== undefined){
                 noneUpRight = false;
                 upRightPiece = diagPiece;
             }
         }
-        if (pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) !== undefined){
+        if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y + SPACING) !== undefined){
             noneUpRight = false;
         }
-        var y = selectedPiece.y + SPACING;
-        for(var x = selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
+        var y = this.selectedPiece.y + SPACING;
+        for(var x = this.selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
             y = y + SPACING;
-            diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+            diagPiece = this.pieces.getChildren().find(piece => piece.x === x & piece.y === y);
             if(noneDownLeft === true & diagPiece !== undefined){
                 noneDownLeft = false;
                 downLeftPiece = diagPiece;
             }
         }
     
-        if (pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y + SPACING) !== undefined){
+        if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x + SPACING & piece.y === this.selectedPiece.y + SPACING) !== undefined){
             noneUpRight = false;
         }
-        var y = selectedPiece.y + SPACING;
-        for(var x = selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
+        var y = this.selectedPiece.y + SPACING;
+        for(var x = this.selectedPiece.x + SPACING*2; x <= END; x = x + SPACING){
             y = y + SPACING;
-            diagPiece = pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+            diagPiece = this.pieces.getChildren().find(piece => piece.x === x & piece.y === y);
             if(noneDownRight === true & diagPiece !== undefined){
                 noneDownRight = false;
                 downRightPiece = diagPiece;
@@ -258,101 +248,101 @@ class BoardScene extends Phaser.Scene{
     determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown){
         var leftZone = null;
         //Check if the selected piece is on the left side of the board
-        if (selectedPiece.x === BEGINNING) {
+        if (this.selectedPiece.x === BEGINNING) {
         } 
         // Checking if there is a piece to left and there isn't one directly next to selected piece 
-        else if(leftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y) === undefined){
-            leftZone = selectZones.create(leftPiece.x + SPACING, leftPiece.y, 'box');
+        else if(leftPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y) === undefined){
+            leftZone = this.selectZones.create(leftPiece.x + SPACING, leftPiece.y, 'box');
         } 
         // Case where there are no pieces to the left
         else if(noneLeft === true) {
-            leftZone = selectZones.create(BEGINNING, selectedPiece.y, 'box');
+            leftZone = this.selectZones.create(BEGINNING, this.selectedPiece.y, 'box');
         }
         // If a leftZone has been created, set it as interactive and set a listener.
         this.activate(leftZone);
     
         var rightZone = null;
-        if (selectedPiece.x === END) {
+        if (this.selectedPiece.x === END) {
         }
-        else if(rightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y) === undefined){
-            rightZone = selectZones.create(rightPiece.x - SPACING, rightPiece.y, 'box');
+        else if(rightPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x + SPACING & piece.y === this.selectedPiece.y) === undefined){
+            rightZone = this.selectZones.create(rightPiece.x - SPACING, rightPiece.y, 'box');
         }else if(noneRight === true) {
-            rightZone = selectZones.create(END, selectedPiece.y, 'box');
+            rightZone = this.selectZones.create(END, this.selectedPiece.y, 'box');
         }
         this.activate(rightZone);
      
         var upZone = null;
-        if (selectedPiece.y === BEGINNING) {
+        if (this.selectedPiece.y === BEGINNING) {
         }
-        else if(upPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y - SPACING) === undefined){
-            upZone = selectZones.create(upPiece.x, upPiece.y + SPACING, 'box');
+        else if(upPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x & piece.y === this.selectedPiece.y - SPACING) === undefined){
+            upZone = this.selectZones.create(upPiece.x, upPiece.y + SPACING, 'box');
         }else if(noneUp === true) {
-            upZone = selectZones.create(selectedPiece.x, BEGINNING, 'box');
+            upZone = this.selectZones.create(this.selectedPiece.x, BEGINNING, 'box');
         }
         this.activate(upZone);
     
         var downZone = null;
-        if (selectedPiece.y === END) {
+        if (this.selectedPiece.y === END) {
         }
-        else if(downPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x & piece.y === selectedPiece.y + SPACING) === undefined){
-            downZone = selectZones.create(downPiece.x, downPiece.y - SPACING, 'box');
+        else if(downPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x & piece.y === this.selectedPiece.y + SPACING) === undefined){
+            downZone = this.selectZones.create(downPiece.x, downPiece.y - SPACING, 'box');
         }else if(noneDown === true) {
-            downZone = selectZones.create(selectedPiece.x, END, 'box');
+            downZone = this.selectZones.create(this.selectedPiece.x, END, 'box');
         }
         this.activate(downZone);
     }
     
     determineDiagMoves(upLeftPiece, upRightPiece, downLeftPiece, downRightPiece){
         var upLeftZone = null;
-        if(selectedPiece.x === BEGINNING || selectedPiece.y === BEGINNING){
+        if(this.selectedPiece.x === BEGINNING || this.selectedPiece.y === BEGINNING){
     
         }
-        else if(upLeftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y - SPACING) === undefined){
-            upLeftZone = selectZones.create(upLeftPiece.x + SPACING, upLeftPiece.y + SPACING, 'box');
+        else if(upLeftPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y - SPACING) === undefined){
+            upLeftZone = this.selectZones.create(upLeftPiece.x + SPACING, upLeftPiece.y + SPACING, 'box');
         }
         this.activate(upLeftZone);
     
         var upRightZone = null;
-        if(selectedPiece.x === END || selectedPiece.y === BEGINNING){
+        if(this.selectedPiece.x === END || this.selectedPiece.y === BEGINNING){
     
         }
-        else if(upRightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x + SPACING & piece.y === selectedPiece.y - SPACING) === undefined){
-            upRightZone = selectZones.create(upRightPiece.x - SPACING, upRightPiece.y + SPACING, 'box');
+        else if(upRightPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x + SPACING & piece.y === this.selectedPiece.y - SPACING) === undefined){
+            upRightZone = this.selectZones.create(upRightPiece.x - SPACING, upRightPiece.y + SPACING, 'box');
         }
         this.activate(upRightZone);
     
         var downLeftZone = null;
-        if(selectedPiece.x === BEGINNING || selectedPiece.x === BEGINNING){
+        if(this.selectedPiece.x === BEGINNING || this.selectedPiece.x === BEGINNING){
     
         }
-        else if(downLeftPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) === undefined){
-            downLeftZone = selectZones.create(downLeftPiece.x + SPACING, downLeftPiece.y - SPACING, 'box');
+        else if(downLeftPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y + SPACING) === undefined){
+            downLeftZone = this.selectZones.create(downLeftPiece.x + SPACING, downLeftPiece.y - SPACING, 'box');
         }
         this.activate(downLeftZone);
     
         var downRightZone = null;
-        if(selectedPiece.x === BEGINNING || selectedPiece.x === BEGINNING){
+        if(this.selectedPiece.x === BEGINNING || this.selectedPiece.x === BEGINNING){
     
         }
-        else if(downRightPiece !== null & pieces.getChildren().find(piece => piece.x === selectedPiece.x - SPACING & piece.y === selectedPiece.y + SPACING) === undefined){
-            downRightZone = selectZones.create(downRightPiece.x + SPACING, downRightPiece.y - SPACING, 'box');
+        else if(downRightPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y + SPACING) === undefined){
+            downRightZone = this.selectZones.create(downRightPiece.x + SPACING, downRightPiece.y - SPACING, 'box');
         }
         this.activate(downRightZone);
     }
     
     // The function for handling the action of selecting a box to move a piece
     move(zone){
-        selectedPiece.clearTint();
-        board[this.simplify(zone.y)][this.simplify(zone.x)] = currentPlayer;
-        board[this.simplify(selectedPiece.y)][this.simplify(selectedPiece.x)] = null;
-        selectedPiece.x = zone.x;
-        selectedPiece.y = zone.y;
-        lastPiece = selectedPiece;
-        selectedPiece = null;
-        selectZones.clear(true, true);
+        this.selectedPiece.clearTint();
+        board[this.simplify(zone.y)][this.simplify(zone.x)] = this.currentPlayer;
+        board[this.simplify(this.selectedPiece.y)][this.simplify(this.selectedPiece.x)] = null;
+        this.selectedPiece.x = zone.x;
+        this.selectedPiece.y = zone.y;
+        this.lastPiece = this.selectedPiece;
+        this.selectedPiece = null;
+        this.selectZones.clear(true, true);
     
         if(this.checkWin()){
-            if(currentPlayer == WHITE){
+            if(this.currentPlayer == WHITE){
                 this.win('White');
             }
             else{
@@ -360,7 +350,7 @@ class BoardScene extends Phaser.Scene{
             }
         }
         else if(this.checkEachCornerFail()){
-            if(currentPlayer == 1){
+            if(this.currentPlayer == 1){
                 this.win('Black');
             }
             else{
@@ -368,14 +358,14 @@ class BoardScene extends Phaser.Scene{
             }
         }
         else{
-            if (currentPlayer === BLACK){
-                turnText.text = 'Turn: ' + (turnNum += 1);
-                playerText.text = "White's Turn";
+            if (this.currentPlayer === BLACK){
+                this.turnText.text = 'Turn: ' + (this.turnNum += 1);
+                this.playerText.text = "White's Turn";
             }
             else{
-                playerText.text = "Black's Turn";
+                this.playerText.text = "Black's Turn";
             }
-            currentPlayer = currentPlayer * -1;
+            this.currentPlayer = this.currentPlayer * -1;
         }
     }
     
@@ -399,7 +389,7 @@ class BoardScene extends Phaser.Scene{
     }
     
     checkCorners(){
-        if(board[0][0] === currentPlayer & board[0][3] === currentPlayer & board[3][0] === currentPlayer & board[3][3] === currentPlayer){
+        if(board[0][0] === this.currentPlayer & board[0][3] === this.currentPlayer & board[3][0] === this.currentPlayer & board[3][3] === this.currentPlayer){
             return true;
         }
         return false;
@@ -412,7 +402,7 @@ class BoardScene extends Phaser.Scene{
                 var topR = board[i+1][j];
                 var botL = board[i][j+1];
                 var botR = board[i+1][j+1];
-                if (topL === currentPlayer & topR === currentPlayer & botL === currentPlayer & botR === currentPlayer){
+                if (topL === this.currentPlayer & topR === this.currentPlayer & botL === this.currentPlayer & botR === this.currentPlayer){
                     return true;
                 }
             }
@@ -421,15 +411,15 @@ class BoardScene extends Phaser.Scene{
     }
     
     checkLine(){
-        var row = this.simplify(lastPiece.y);
-        var col = this.simplify(lastPiece.x);
+        var row = this.simplify(this.lastPiece.y);
+        var col = this.simplify(this.lastPiece.x);
         var horiz = true;
         var vert = true;
         for (var i = 0; i < board.length; i++){
-            if (board[i][col] != currentPlayer){
+            if (board[i][col] != this.currentPlayer){
                 vert = false;
             }
-            if(board[row][i] != currentPlayer){
+            if(board[row][i] != this.currentPlayer){
                 horiz = false;
             }
         }
@@ -439,7 +429,7 @@ class BoardScene extends Phaser.Scene{
     checkEachCornerFail(){
         for(var x = 0; x < board.length; x += 3){
             for(var y = 0; y < board[x].length; y +=3){
-                if (board[x][y] === currentPlayer * -1){
+                if (board[x][y] === this.currentPlayer * -1){
                     if(this.checkCornerFail(x, y)){
                         return true;
                     }
@@ -451,22 +441,22 @@ class BoardScene extends Phaser.Scene{
     
     checkCornerFail(x, y){
         if(x === 0 & y === 0){
-            if(board[x+1][y] == currentPlayer & board[x][y+1] == currentPlayer & board[x+1][y+1] == currentPlayer){
+            if(board[x+1][y] == this.currentPlayer & board[x][y+1] == this.currentPlayer & board[x+1][y+1] == this.currentPlayer){
                 return true;
             }
         }
         else if(x === 3 & y === 0){
-            if(board[x - 1][y] == currentPlayer & board[x][y + 1] == currentPlayer & board[x - 1][y + 1] == currentPlayer){
+            if(board[x - 1][y] == this.currentPlayer & board[x][y + 1] == this.currentPlayer & board[x - 1][y + 1] == this.currentPlayer){
                 return true;
             }
         }
         else if (x === 0 & y === 3){
-            if(board[x + 1][y] == currentPlayer & board[x][y - 1] == currentPlayer & board[x + 1][y - 1] == currentPlayer){
+            if(board[x + 1][y] == this.currentPlayer & board[x][y - 1] == this.currentPlayer & board[x + 1][y - 1] == this.currentPlayer){
                 return true;
             }
         }
         else{
-            if(board[x - 1][y] == currentPlayer & board[x][y - 1] == currentPlayer & board[x - 1][y - 1] == currentPlayer){
+            if(board[x - 1][y] == this.currentPlayer & board[x][y - 1] == this.currentPlayer & board[x - 1][y - 1] == this.currentPlayer){
                 return true;
             }
         }
@@ -474,14 +464,8 @@ class BoardScene extends Phaser.Scene{
     }
     
     win(player){
-        if(player === 'White'){
-            overlay.setVisible(true);
-            whiteWinText.setVisible(true);
-        }
-        else{
-            overlay.setVisible(true);
-            blackWinText.setVisible(true);
-        }
+        this.scene.pause();
+        this.scene.launch('winScreen', {winner: player});
     }
 };
 
@@ -503,6 +487,7 @@ class MainMenu extends Phaser.Scene{
 
     play(localComp){
         this.scene.stop('mainMenu');
+        this.scene.restart('boardScene');
         this.scene.start('boardScene');
     }
 };
@@ -515,8 +500,7 @@ class PauseMenu extends Phaser.Scene{
         this.load.image('overlay', '/src/assets/darken.png');
     }
     create(){
-        console.log("hello, this me, pause");
-        overlay = this.add.image(0, 0, 'overlay');
+        var overlay = this.add.image(0, 0, 'overlay');
         var continueText = this.add.text(100, 250, 'Resume', {fontFamily: 'Verdana, Georgia, serif', fontSize: '60px'});
         continueText.setInteractive();
         continueText.on('clicked', this.continue, this);
@@ -539,6 +523,31 @@ class PauseMenu extends Phaser.Scene{
     }
 }
 
+class WinScreen extends Phaser.Scene{
+    constructor(){
+        super({key: 'winScreen'})
+    }
+    init(data){
+        this.winner = data.winner;
+    }
+    preload(){
+        this.load.image('overlay', '/src/assets/darken.png');
+    }
+    create(){
+        var overlay = this.add.image(0, 0, 'overlay');
+        var WinText = this.add.text(MIDDLE - 212, MIDDLE - 100, this.winner + ' Wins!', { fontFamily: 'Verdana, Georgia, serif', fontSize: '78px', align: 'center'});
+        var returnText = this.add.text(BEGINNING - 50, MIDDLE + 75, 'Return to Main Menu', { fontFamily: 'Verdana, Georgia, serif', fontSize: '60px', align: 'center'});
+        returnText.setInteractive();
+        returnText.on('clicked', this.returnToMenu, this);
+        this.input.on('gameobjectup', function(pointer, gameObject){
+            gameObject.emit('clicked', gameObject);
+        }, this);
+    }
+    returnToMenu(){
+        this.scene.start('mainMenu');
+        this.scene.stop('boardScene');
+    }
+}
 var config = {
     type: Phaser.AUTO,
     width: 787,
@@ -548,7 +557,7 @@ var config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [MainMenu , BoardScene, PauseMenu],
+    scene: [MainMenu , BoardScene, PauseMenu, WinScreen],
 };
 
 var game = new Phaser.Game(config);
