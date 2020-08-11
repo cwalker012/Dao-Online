@@ -104,6 +104,7 @@ class BoardScene extends Phaser.Scene{
     }
     
     findPieces(groupArray){
+        console.log(groupArray);
         var leftPiece = null;
         var noneLeft = true;
         var rightPiece = null;
@@ -127,32 +128,54 @@ class BoardScene extends Phaser.Scene{
             if(groupArray[i] !== this.selectedPiece){
                 if(this.selectedPiece.y === groupArray[i].y){
                     if(groupArray[i].x < this.selectedPiece.x - SPACING){
-                        leftPiece = groupArray[i];
-                        noneLeft = false;
+                        if(leftPiece === null){
+                            leftPiece = groupArray[i];
+                            noneLeft = false;
+                        }
+                        else if(leftPiece !== null && groupArray[i].x > leftPiece.x){
+                            leftPiece = groupArray[i];
+                        }
                     }
                     else if(groupArray[i].x === this.selectedPiece.x - SPACING){
                         noneLeft = false;
                     }
-                } if(this.selectedPiece.y === groupArray[i].y & rightPiece === null){
+                } if(this.selectedPiece.y === groupArray[i].y){
                     if(groupArray[i].x > this.selectedPiece.x + SPACING){
-                        rightPiece = groupArray[i];
-                        noneRight = false;
+                        if(rightPiece === null){
+                            rightPiece = groupArray[i];
+                            noneRight = false;
+                        }
+                        else if(rightPiece !== null && groupArray[i].x < rightPiece.x){
+                            rightPiece = groupArray[i];
+                        }
                     }
                     else if (groupArray[i].x === this.selectedPiece.x + SPACING){
                         noneRight = false;
                     }
-                } if (this.selectedPiece.x === groupArray[j].x & downPiece == null){
-                    if(groupArray[j].y > this.selectedPiece.y + SPACING){
-                        downPiece = groupArray[j];
-                        noneDown = false;
+                } if (this.selectedPiece.x === groupArray[i].x){
+                    if(groupArray[i].y > this.selectedPiece.y + SPACING){
+                        if(downPiece === null){
+                            downPiece = groupArray[i];
+                            noneDown = false;
+                        }
+                        else if(downPiece !== null && groupArray[i].y < downPiece.y){
+                            downPiece = groupArray[i];
+                        }
+                        
                     }
-                    else if(groupArray[j].y === this.selectedPiece.y + SPACING){
+                    else if(groupArray[i].y === this.selectedPiece.y + SPACING){
                         noneDown = false;
+                        downPiece = false;
                     }
                 } if(this.selectedPiece.x === groupArray[i].x){
                     if(groupArray[i].y < this.selectedPiece.y - SPACING){
-                        upPiece = groupArray[i];
-                        noneUp = false;
+                        if(upPiece === null){
+                            upPiece = groupArray[i];
+                            noneUp = false;
+                        }
+                        else if(upPiece !== null && groupArray[i].y > upPiece.y){
+                            upPiece = groupArray[i];
+                        }
                     }
                     else if(groupArray[i].y === this.selectedPiece.y - SPACING){
                         noneUp = false;
@@ -224,7 +247,6 @@ class BoardScene extends Phaser.Scene{
         }
         var initialX = this.simplify(this.selectedPiece.x);
         var initialY = this.simplify(this.selectedPiece.y);
-        var difference = initialY - initialX;
         var pairX;
         var pairY;
         for(var x = initialX - 1; x >= 0; x = x - 1){
@@ -375,7 +397,6 @@ class BoardScene extends Phaser.Scene{
         this.lastPiece = this.selectedPiece;
         this.selectedPiece = null;
         this.selectZones.clear(true, true);
-    
         if(this.checkWin()){
             if(this.currentPlayer == WHITE){
                 this.win('White');
