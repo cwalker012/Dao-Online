@@ -80,13 +80,11 @@ class BoardScene extends Phaser.Scene{
     }
 
     pause(action){
-        console.log('Pause action');
         this.scene.launch('pauseMenu');
         this.scene.pause();
     }
 
     select(piece){
-        console.log(piece.y);
         if((piece.texture.key === 'white' & this.currentPlayer === WHITE) || (piece.texture.key == 'black' & this.currentPlayer === BLACK)){
             if (piece == this.selectedPiece){
                 piece.clearTint();
@@ -123,7 +121,9 @@ class BoardScene extends Phaser.Scene{
         var downRightPiece = null;
         var noneDownRight = true;
         var groupArray = groupArray.children.entries;
+        var j = groupArray.length;
         for(var i = 0; i < groupArray.length; i++) {
+            j = j - 1;
             if(groupArray[i] !== this.selectedPiece){
                 if(this.selectedPiece.y === groupArray[i].y){
                     if(groupArray[i].x < this.selectedPiece.x - SPACING){
@@ -141,12 +141,12 @@ class BoardScene extends Phaser.Scene{
                     else if (groupArray[i].x === this.selectedPiece.x + SPACING){
                         noneRight = false;
                     }
-                } if (this.selectedPiece.x === groupArray[i].x & downPiece == null){
-                    if(groupArray[i].y > this.selectedPiece.y + SPACING){
-                        downPiece = groupArray[i];
+                } if (this.selectedPiece.x === groupArray[j].x & downPiece == null){
+                    if(groupArray[j].y > this.selectedPiece.y + SPACING){
+                        downPiece = groupArray[j];
                         noneDown = false;
                     }
-                    else if(groupArray[i].y === this.selectedPiece.y + SPACING){
+                    else if(groupArray[j].y === this.selectedPiece.y + SPACING){
                         noneDown = false;
                     }
                 } if(this.selectedPiece.x === groupArray[i].x){
@@ -160,170 +160,123 @@ class BoardScene extends Phaser.Scene{
                 }
             }
         }
+
         //For loop checking pieces going up left diagonally
         // - x - y
         if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y - SPACING) !== undefined){
             noneUpLeft = false;
         }
-        var y = this.selectedPiece.y - SPACING;
-        var subY = true;
-        for(var x = this.selectedPiece.x - SPACING*2; x >= BEGINNING; x = x - SPACING){
-            y = y - SPACING;
-            subY = false;
-            if(y > BEGINNING){
-                diagPiece = this.pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        var initialX = this.simplify(this.selectedPiece.x);
+        var initialY = this.simplify(this.selectedPiece.y);
+        var pairX;
+        var pairY;
+        for(var x = initialX - 1; x >= 0; x = x - 1){
+            var counter = initialY;
+            for(var y = initialY - 1; y >= counter - 1 && y >= 0; y = y - 1){
+                initialY = y;
+                pairX = x;
+                pairY = y;
+                var diagPiece = this.pieces.getChildren().find(piece => piece.x === this.makeCoordinate(x) & piece.y === this.makeCoordinate(y));
                 if(noneUpLeft === true & diagPiece !== undefined){
-                    noneUpLeft = false;
+                     noneUpLeft = false;
                     upLeftPiece = diagPiece;
-                }
-                else{
-                    subY = true;
-                }
-            }
-            else {
-                subY = true;
-                break;
+                }                
             }
         }
-        // Checking for none up left
-        if(this.selectedPiece.x !== BEGINNING & this.selectedPiece.y !== BEGINNING){
-            if(noneUpLeft & subY === false){
-                this.activate(this.selectZones.create(x + SPACING, y + SPACING, 'box'))
-            }
-            else if(noneUpLeft & subY){
-                console.log(x - this.selectedPiece.x + " x");
-                console.log(y - this.selectedPiece.y + " y");
-                if(x - this.selectedPiece.x === y - this.selectedPiece.y){
-                    this.activate(this.selectZones.create(x + SPACING, y + SPACING, 'box')) 
-                }
-                else{
-                    this.activate(this.selectZones.create(x + SPACING, y, 'box'))
-                }
-            }
-        }  
+        pairX = this.makeCoordinate(pairX);
+        pairY = this.makeCoordinate(pairY);
+        // none up left check
+        if(noneUpLeft){
+            this.activate(this.selectZones.create(pairX, pairY, 'box'))
+        }
+
         //up right check
         if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x + SPACING & piece.y === this.selectedPiece.y - SPACING) !== undefined){
             noneUpRight = false;
         }
-        var y = this.selectedPiece.y - SPACING;
-        var subY = true;
-        for(var x = this.selectedPiece.x + SPACING*2; x < END; x = x + SPACING){
-            y = y - SPACING;
-            subY = false;
-            if(y < END){
-                var diagPiece = this.pieces.getChildren().find(piece => piece.x === x & piece.y === y);
-                if(noneDownLeft === true & diagPiece !== undefined){
-                    noneDownLeft = false;
-                    downLeftPiece = diagPiece;
-                }
-                else{
-                    subY = true;
-                }
-            }
-            else {
-                subY = true;
-                break;
+        var initialX = this.simplify(this.selectedPiece.x);
+        var initialY = this.simplify(this.selectedPiece.y);
+        var pairX;
+        var pairY;
+        for(var x = initialX + 1; x <= 3; x = x + 1){
+            var counter = initialY;
+            for(var y = initialY - 1; y >= counter - 1 && y >= 0; y = y - 1){
+                initialY = y;
+                pairX = x;
+                pairY = y;
+                var diagPiece = this.pieces.getChildren().find(piece => piece.x === this.makeCoordinate(x) & piece.y === this.makeCoordinate(y));
+                if(noneUpRight === true & diagPiece !== undefined){
+                     noneUpRight = false;
+                    upRightPiece = diagPiece;
+                }                
             }
         }
+        pairX = this.makeCoordinate(pairX);
+        pairY = this.makeCoordinate(pairY);
         // none up right check
-        if(this.selectedPiece.x !== END & this.selectedPiece.y !== BEGINNING){
-            if(noneUpRight & subY === false){
-                this.activate(this.selectZones.create(x - SPACING, y + SPACING, 'box'))
-            }
-            else if(noneUpRight & subY){
-                if(x + this.selectedPiece.x === y - this.selectedPiece.y){
-                    this.activate(this.selectZones.create(x - SPACING, y + SPACING, 'box')) 
-                }
-                else{
-                    this.activate(this.selectZones.create(x - SPACING, y, 'box'))
-                }
-            }
-        }  
+        if(noneUpRight){
+            this.activate(this.selectZones.create(pairX, pairY, 'box'))
+        }
 
         // down left check
         if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y + SPACING) !== undefined){
             noneDownLeft = false;
         }
         var initialX = this.simplify(this.selectedPiece.x);
-        console.log(initialX);
         var initialY = this.simplify(this.selectedPiece.y);
         var difference = initialY - initialX;
-        console.log(difference);
-        var subY = true;
-        console.log(initialX);
         var pairX;
         var pairY;
         for(var x = initialX - 1; x >= 0; x = x - 1){
-            console.log(x + difference);
             var counter = initialY;
             for(var y = initialY + 1; y <= counter + 1 && y <= 3; y = y + 1){
                 initialY = y;
                 pairX = x;
                 pairY = y;
-                console.log("x: " + x, 'y: '+ y);
-                subY = false;
-                if(y <= END){
-                    var diagPiece = this.pieces.getChildren().find(piece => piece.x === this.makeCoordinate(x) & piece.y === this.makeCoordinate(y));
-                    if(noneDownLeft === true & diagPiece !== undefined){
-                        noneDownLeft = false;
-                        downLeftPiece = diagPiece;
-                    }
-                    else{
-                        subY = true;
-                    }
-                }
-                else {
-                    subY = true;
-                    break;
-                }
+                var diagPiece = this.pieces.getChildren().find(piece => piece.x === this.makeCoordinate(x) & piece.y === this.makeCoordinate(y));
+                if(noneDownLeft === true & diagPiece !== undefined){
+                     noneDownLeft = false;
+                    downLeftPiece = diagPiece;
+                }                
             }
         }
         pairX = this.makeCoordinate(pairX);
-        console.log(this.makeCoordinate(0));
         pairY = this.makeCoordinate(pairY);
         // none down left check
         if(noneDownLeft){
             this.activate(this.selectZones.create(pairX, pairY, 'box'))
         }
-    
+        
+        // down right check
         if (this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x + SPACING & piece.y === this.selectedPiece.y + SPACING) !== undefined){
             noneDownRight = false;
         }
-        var y = this.selectedPiece.y + SPACING;
-        var subY = true;
-        for(var x = this.selectedPiece.x + SPACING*2; x < END; x = x + SPACING){
-            y = y + SPACING;
-            subY = false;
-            if(y < END){
-                diagPiece = this.pieces.getChildren().find(piece => piece.x === x & piece.y === y);
+        var initialX = this.simplify(this.selectedPiece.x);
+        var initialY = this.simplify(this.selectedPiece.y);
+        var pairX;
+        var pairY;
+        for(var x = initialX + 1; x <= 3; x = x + 1){
+            var counter = initialY;
+            for(var y = initialY + 1; y <= counter + 1 && y <= 3; y = y + 1){
+                initialY = y;
+                pairX = x;
+                pairY = y;
+                var diagPiece = this.pieces.getChildren().find(piece => piece.x === this.makeCoordinate(x) & piece.y === this.makeCoordinate(y));
                 if(noneDownRight === true & diagPiece !== undefined){
                     noneDownRight = false;
                     downRightPiece = diagPiece;
-                }
-                else{
-                    subY = true;
-                }
-            }
-            else {
-                subY = true;
-                break;
+                }                
             }
         }
-        if(this.selectedPiece.x !== END & this.selectedPiece.y !== END){
-            if(noneDownRight & subY === false){
-                this.activate(this.selectZones.create(x - SPACING, y - SPACING, 'box'))
-            }
-            else if(noneDownRight & subY){
-                if(x + this.selectedPiece.x === y + this.selectedPiece.y){
-                    this.activate(this.selectZones.create(x - SPACING, y - SPACING, 'box')) 
-                }
-                else{
-                    this.activate(this.selectZones.create(x - SPACING, y, 'box'))
-                }
-            }
-        }  
+        pairX = this.makeCoordinate(pairX);
+        pairY = this.makeCoordinate(pairY);
+        // none down right check
+        if(noneDownRight){
+            this.activate(this.selectZones.create(pairX, pairY, 'box'))
+        }
+
         this.determineMoves(leftPiece, noneLeft, rightPiece, noneRight, upPiece, noneUp, downPiece, noneDown);
-        this.determineDiagMoves(upLeftPiece, noneUpLeft, upRightPiece, noneUpRight, downLeftPiece, noneDownLeft, downRightPiece, noneDownRight);
+        this.determineDiagMoves(upLeftPiece, upRightPiece, downLeftPiece, downRightPiece);
     }
     
     /* Determine takes the pieces and boolean used to determine where to
@@ -395,7 +348,7 @@ class BoardScene extends Phaser.Scene{
         this.activate(upRightZone);
     
         var downLeftZone = null;
-        if(this.selectedPiece.x === BEGINNING || this.selectedPiece.x === BEGINNING){
+        if(this.selectedPiece.x === BEGINNING || this.selectedPiece.y === END){
     
         }
         else if(downLeftPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y + SPACING) === undefined){
@@ -404,11 +357,10 @@ class BoardScene extends Phaser.Scene{
         this.activate(downLeftZone);
     
         var downRightZone = null;
-        if(this.selectedPiece.x === BEGINNING || this.selectedPiece.x === BEGINNING){
-    
+        if(this.selectedPiece.x === END || this.selectedPiece.y === END){
         }
-        else if(downRightPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x - SPACING & piece.y === this.selectedPiece.y + SPACING) === undefined){
-            downRightZone = this.selectZones.create(downRightPiece.x + SPACING, downRightPiece.y - SPACING, 'box');
+        else if(downRightPiece !== null & this.pieces.getChildren().find(piece => piece.x === this.selectedPiece.x + SPACING & piece.y === this.selectedPiece.y + SPACING) === undefined){
+            downRightZone = this.selectZones.create(downRightPiece.x - SPACING, downRightPiece.y - SPACING, 'box');
         }
         this.activate(downRightZone);
     }
