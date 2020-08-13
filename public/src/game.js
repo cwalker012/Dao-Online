@@ -20,6 +20,9 @@ class BoardScene extends Phaser.Scene{
     constructor(){
         super({key: 'boardScene'})
     }
+    init(data){
+        this.online = data.online;
+    }
     preload(){
         this.load.image('black', './src/assets/black.png');
         this.load.image('white', './src/assets/white.png');
@@ -540,19 +543,27 @@ class MainMenu extends Phaser.Scene{
     }
     create(){
         var daoTitle = this.add.text(75, 100, 'Dao Online', { fontFamily: 'Verdana, Georgia, serif', fontSize: '110px', align: 'center'});
-        var localComp = this.add.text(150, 300, 'Local Game', { fontFamily: 'Verdana, Georgia, serif', fontSize: '80px', align: 'center'});
+        var localComp = this.add.text(100, 300, 'Local Game', { fontFamily: 'Verdana, Georgia, serif', fontSize: '65px', align: 'center'});
+        var hostOnline = this.add.text(100, 410, 'Host Online Game', {fontFamily: 'Verdana, Georgia, serif', fontSize: '65px', align: 'center'});
+        var joinOnline = this.add.text(100, 520, 'Join Online Game', {fontFamily: 'Verdana, Georgia, serif', fontSize: '65px', align: 'center'})
         localComp.setInteractive();
+        hostOnline.setInteractive();
+        joinOnline.setInteractive();
         localComp.on('clicked', this.play, this);
+        hostOnline.on('clicked', this.host, this);
+        joinOnline.on('clicked', this.join, this);
         this.input.on('gameobjectup', function (pointer, gameObject)
         {
             gameObject.emit('clicked', gameObject);
         }, this);
     }
-
     play(localComp){
         this.scene.stop('mainMenu');
         this.scene.restart('boardScene');
-        this.scene.start('boardScene');
+        this.scene.start('boardScene', {online: false});
+    }
+    host(hostOnline){
+       this.scene.start('boardScene', {online: true}); 
     }
 };
 
