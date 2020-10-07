@@ -20,5 +20,6 @@
   "homepage": "https://github.com/cwalker012/Dao-Online#readme",
   "dependencies": {
     "express": "^4.17.1"
-  }
+  },
+  "devDependencies": {}
 }

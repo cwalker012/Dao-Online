@@ -8,11 +8,11 @@ const MIDDLE = (BEGINNING + END)/2;
 var board;
 
 class BoardScene extends Phaser.Scene{
-    selectedPiece = null;
+    selectedPiece = null;  // the piece currently selected by the player;
     pieces;  // All the game pieces stored in a group
     selectZones;  // The group that stores the sprites for selecting your piece's move
-    lastPiece = null;
-    turnNum;
+    lastPiece = null; // The piece that was last moved
+    turnNum; 
     playerText;
     turnText;
     currentPlayer;
@@ -33,7 +33,17 @@ class BoardScene extends Phaser.Scene{
                 [null, WHITE, BLACK, null],
                 [null, BLACK, WHITE, null],
                 [BLACK, null, null, WHITE]];
-
+        var socket;
+        if(online === true){
+            socket = io();
+            socket.io('move', function(msg){
+                if(msg.room == roomId){
+                    this.selectedPiece = msg.move.selectedPiece;
+                    this.move(msg.move.zone);
+                }
+            });
+        }
+        
         this.pieces = this.add.group();
         for(var i = 0; i < board.length; i++){
             for(var j = 0; j < board[i].length; j++){
@@ -88,20 +98,22 @@ class BoardScene extends Phaser.Scene{
     }
 
     select(piece){
-        if((piece.texture.key === 'white' & this.currentPlayer === WHITE) || (piece.texture.key == 'black' & this.currentPlayer === BLACK)){
-            if (piece == this.selectedPiece){
-                piece.clearTint();
-                this.selectedPiece = null;
-                this.selectZones.clear(true, true);
-            }
-            else{
-                if(this.selectedPiece != null){
-                    this.selectedPiece.clearTint();
+        if(!online){
+            if((piece.texture.key === 'white' & this.currentPlayer === WHITE) || (piece.texture.key == 'black' & this.currentPlayer === BLACK)){
+                if (piece == this.selectedPiece){
+                    piece.clearTint();
+                    this.selectedPiece = null;
                     this.selectZones.clear(true, true);
                 }
-                this.selectedPiece = piece;
-                piece.setTintFill(0xff0000);
-                this.findPieces(this.pieces);
+                else{
+                    if(this.selectedPiece != null){
+                        this.selectedPiece.clearTint();
+                        this.selectZones.clear(true, true);
+                    }
+                    this.selectedPiece = piece;
+                    piece.setTintFill(0xff0000);
+                    this.findPieces(this.pieces);
+                }
             }
         }
     }
@@ -395,6 +407,10 @@ class BoardScene extends Phaser.Scene{
         this.selectedPiece.clearTint();
         board[this.simplify(zone.y)][this.simplify(zone.x)] = this.currentPlayer;
         board[this.simplify(this.selectedPiece.y)][this.simplify(this.selectedPiece.x)] = null;
+        var move = {
+            selectedPiece = this.selectedPiece,
+            zone = this.zone
+        };
         this.selectedPiece.x = zone.x;
         this.selectedPiece.y = zone.y;
         this.lastPiece = this.selectedPiece;
@@ -407,6 +423,7 @@ class BoardScene extends Phaser.Scene{
             else{
                 this.win('Black');
             }
+            socket.emit('gameOver', roomId);
         }
         else if(this.checkEachCornerFail()){
             if(this.currentPlayer == 1){
@@ -415,8 +432,10 @@ class BoardScene extends Phaser.Scene{
             else{
                 this.win('White');
             }
+            socket.emit('gameOver', roomId);
         }
         else{
+            socket.emit('move', { move: move, room: roomId});
             if (this.currentPlayer === BLACK){
                 this.turnText.text = 'Turn: ' + (this.turnNum += 1);
                 this.playerText.text = "White's Turn";
@@ -542,15 +561,15 @@ class MainMenu extends Phaser.Scene{
         super({key: 'mainMenu', active: true})
     }
     create(){
-        var daoTitle = this.add.text(75, 100, 'Dao Online', { fontFamily: 'Verdana, Georgia, serif', fontSize: '110px', align: 'center'});
-        var localComp = this.add.text(100, 300, 'Local Game', { fontFamily: 'Verdana, Georgia, serif', fontSize: '65px', align: 'center'});
-        var hostOnline = this.add.text(100, 410, 'Host Online Game', {fontFamily: 'Verdana, Georgia, serif', fontSize: '65px', align: 'center'});
-        var joinOnline = this.add.text(100, 520, 'Join Online Game', {fontFamily: 'Verdana, Georgia, serif', fontSize: '65px', align: 'center'})
+        var daoTitle = this.add.text(75, 100, 'Dao Online', {fontFamily: 'Verdana, Georgia, serif', fontSize: '110px', align: 'center'});
+        var localComp = this.add.text(100, 300, 'Local Game', {fontFamily: 'Verdana, Georgia, serif', fontSize: '64px', align: 'center'});
+        var createOnline = this.add.text(100, 410, 'Create Online Game', {fontFamily: 'Verdana, Georgia, serif', fontSize: '64px', align: 'center'});
+        var joinOnline = this.add.text(100, 520, 'Join Online Game', {fontFamily: 'Verdana, Georgia, serif', fontSize: '64px', align: 'center'})
         localComp.setInteractive();
-        hostOnline.setInteractive();
+        createOnline.setInteractive();
         joinOnline.setInteractive();
         localComp.on('clicked', this.play, this);
-        hostOnline.on('clicked', this.host, this);
+        createOnline.on('clicked', this.host, this);
         joinOnline.on('clicked', this.join, this);
         this.input.on('gameobjectup', function (pointer, gameObject)
         {
@@ -563,9 +582,69 @@ class MainMenu extends Phaser.Scene{
         this.scene.start('boardScene', {online: false});
     }
     host(hostOnline){
-       this.scene.start('boardScene', {online: true}); 
+       this.scene.start('createRoomMenu', {online: true}); 
+    }
+
+    join(joinOnline){
+        this.scene.start('joinRoomMenu')
     }
 };
+
+class CreatRoomMenu extends Phaser.Scene{
+    constructor(){
+        super({key: 'createRoomMenu'});
+    }
+    create(){
+        var socket = io();
+        var players;
+        var roomId;
+        var play = true;
+        var color;
+        socket.on('player', (msg) => {
+            roomId = msg.roomId;
+            var roomIdText = this.add.text(100, 300, 'Room Id: '+ roomId, {fontFamily: 'Verdana, Georgia, serif', fontSize: '64px', align: 'center'})
+            color = msg.color;
+            players = msg.players;
+            if(players == 2){
+                play = false;
+
+                socket.emit('play', msg.roomId);
+                this.scene.start('boardScene', {online: true, socket, players, roomId, play, color})
+            }
+        });
+    }
+}
+
+class JoinRoomMenu extends Phaser.Scene{
+    constructor(){
+        super({key: 'joinRoomMenu'});
+    }
+    preload(){
+        this.game.add.plugin(PhaserInput.Plugin);
+    }
+
+    create(){
+        this
+        var socket = io();
+        var players;
+        var roomId;
+        var play = true;
+        var color;
+        socket.on('player', (msg) => {
+            roomId = msg.roomId;
+            var roomIdText = this.add.text(100, 300, 'Input Room Id:', {fontFamily: 'Verdana, Georgia, serif', fontSize: '64px', align: 'center'});
+            var input = game.add.inputField(10, 90);
+            color = msg.color;
+            players = msg.players;
+            if(players == 2){
+                play = false;
+
+                socket.emit('play', msg.roomId);
+                this.scene.start('boardScene', {online: true, socket, players, roomId, play, color})
+            }
+        });
+    }
+}
 
 class PauseMenu extends Phaser.Scene{
     constructor(){
